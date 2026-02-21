@@ -1,0 +1,119 @@
+groups:
+  - name: packaging_optimizer_alerts
+    interval: 30s
+    rules:
+      # High error rate
+      - alert: HighErrorRate
+        expr: rate(errors_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors/min (threshold: 10)"
+
+      - alert: CriticalErrorRate
+        expr: rate(errors_total[5m]) > 50
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical error rate detected"
+          description: "Error rate is {{ $value }} errors/min (threshold: 50)"
+
+      # Slow API responses
+      - alert: SlowAPIResponses
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API response time degradation"
+          description: "95th percentile response time is {{ $value }}s (threshold: 0.5s)"
+
+      - alert: CriticalAPIResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2.0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical API response time degradation"
+          description: "95th percentile response time is {{ $value }}s (threshold: 2.0s)"
+
+      # Database connection failures
+      - alert: DatabaseConnectionFailures
+        expr: rate(database_connection_errors_total[5m]) > 3
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection failures detected"
+          description: "Database connection failure rate is {{ $value }}/min"
+
+      - alert: CriticalDatabaseFailures
+        expr: rate(database_connection_errors_total[5m]) > 10
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical database connection failures"
+          description: "Database connection failure rate is {{ $value }}/min"
+
+      # Slow database queries
+      - alert: SlowDatabaseQueries
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile query time is {{ $value }}s"
+
+      # High queue size
+      - alert: HighQueueSize
+        expr: job_queue_size > 100
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Job queue size is high"
+          description: "Queue {{ $labels.queue_name }} has {{ $value }} jobs pending"
+
+      - alert: CriticalQueueSize
+        expr: job_queue_size > 500
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Job queue size is critical"
+          description: "Queue {{ $labels.queue_name }} has {{ $value }} jobs pending"
+
+      # Service health
+      - alert: ServiceDown
+        expr: up{job="packaging-optimizer"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service is down"
+          description: "Packaging optimizer service is not responding"
+
+      # High optimization processing time
+      - alert: SlowOptimization
+        expr: histogram_quantile(0.95, rate(optimization_duration_seconds_bucket[5m])) > 1.0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Optimization processing is slow"
+          description: "95th percentile optimization time is {{ $value }}s"
+
+      # Quota violations spike
+      - alert: HighQuotaViolations
+        expr: rate(quota_violations_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High rate of quota violations"
+          description: "Quota violation rate is {{ $value }}/min"

@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  CUSTOMER
+  TRIAL
+}
+
+enum SubscriptionTier {
+  FREE
+  BASIC
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  TRIAL
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+}
+
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  passwordHash     String
+  role             UserRole         @default(CUSTOMER)
+  subscriptionTier SubscriptionTier @default(FREE)
+  apiKey           String?          @unique
+  apiKeyCreatedAt  DateTime?
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  lastLogin        DateTime?
+
+  subscription    Subscription?
+  configurations  Configuration[]
+  simulationJobs  SimulationJob[]
+  orders          Order[]
+  usageRecords    UsageRecord[]
+
+  @@index([email])
+  @@index([apiKey])
+}
+
+model Subscription {
+  id            String             @id @default(uuid())
+  userId        String             @unique
+  tier          SubscriptionTier
+  monthlyQuota  Int
+  currentUsage  Int                @default(0)
+  status        SubscriptionStatus @default(ACTIVE)
+  startDate     DateTime           @default(now())
+  renewalDate   DateTime
+  price         Float
+  autoRenew     Boolean            @default(true)
+  version       Int                @default(0)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Box {
+  id         String   @id @default(uuid())
+  name       String
+  length     Float
+  width      Float
+  height     Float
+  volume     Float
+  maxWeight  Float
+  isActive   Boolean  @default(true)
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orders Order[]
+
+  @@index([isActive])
+  @@index([isActive, volume])
+}
+
+model SimulationJob {
+  id              String    @id @default(uuid())
+  userId          String
+  fileName        String
+  totalOrders     Int
+  processedOrders Int       @default(0)
+  status          JobStatus @default(PENDING)
+  createdAt       DateTime  @default(now())
+  completedAt     DateTime?
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  simulations Simulation[]
+  orders      Order[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([userId, status])
+  @@index([userId, createdAt])
+}
+
+model Simulation {
+  id                   String    @id @default(uuid())
+  jobId                String
+  optimizedTotalCost   Float
+  baselineTotalCost    Float
+  totalSavings         Float
+  savingsPercentage    Float
+  averageUtilization   Float
+  monthlySavings       Float
+  annualSavings        Float
+  reportUrl            String?
+  reportExpiresAt      DateTime?
+  createdAt            DateTime  @default(now())
+
+  job SimulationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+}
+
+model Order {
+  id                 String   @id @default(uuid())
+  orderId            String
+  userId             String
+  jobId              String?
+  totalWeight        Float
+  selectedBoxId      String?
+  volumetricWeight   Float?
+  billableWeight     Float?
+  shippingCost       Float?
+  spaceUtilization   Float?
+  wastedVolume       Float?
+  isOptimized        Boolean  @default(false)
+  isBaseline         Boolean  @default(false)
+  rejectionReason    String?
+  createdAt          DateTime @default(now())
+
+  user  User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job   SimulationJob? @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  box   Box?           @relation(fields: [selectedBoxId], references: [id])
+  items Item[]
+
+  @@index([userId])
+  @@index([jobId])
+  @@index([orderId])
+  @@index([userId, createdAt])
+  @@index([selectedBoxId, createdAt])
+  @@index([userId, isOptimized])
+}
+
+model Item {
+  id       String @id @default(uuid())
+  orderId  String
+  itemId   String
+  length   Float
+  width    Float
+  height   Float
+  weight   Float
+  quantity Int
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}
+
+model Configuration {
+  id                           String   @id @default(uuid())
+  userId                       String
+  bufferPadding                Float    @default(2)
+  volumetricDivisor            Float    @default(5000)
+  shippingRatePerKg            Float    @default(0.5)
+  maxWeightOverride            Float?
+  baselineBoxSelectionStrategy String   @default("next_larger")
+  enableForecast               Boolean  @default(true)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@index([userId])
+}
+
+model UsageRecord {
+  id               String   @id @default(uuid())
+  userId           String
+  orderCount       Int
+  cumulativeUsage  Int
+  timestamp        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([timestamp])
+  @@index([userId, timestamp])
+}
+
+model Invoice {
+  id             String        @id @default(uuid())
+  subscriptionId String
+  startDate      DateTime
+  endDate        DateTime
+  totalOrders    Int
+  basePrice      Float
+  overageCharges Float         @default(0)
+  totalAmount    Float
+  status         InvoiceStatus @default(PENDING)
+  dueDate        DateTime
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([status])
+}
