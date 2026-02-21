@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Production-grade B2B SaaS platform for logistics cost optimization",
   "main": "dist/index.js",
+  
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

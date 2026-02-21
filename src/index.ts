@@ -109,6 +109,24 @@ app.use('/api/subscriptions', subscriptionRoutes)
 app.use('/api/analytics', analyticsRoutes)
 app.use('/api/config', configRoutes)
 
+
+// Serve frontend static files in production
+if (process.env.NODE_ENV === 'production') {
+  const path = require('path')
+  
+  // Serve Next.js static files
+  app.use(express.static(path.join(__dirname, '../frontend/.next/standalone')))
+  app.use(express.static(path.join(__dirname, '../frontend/public')))
+  app.use('/_next/static', express.static(path.join(__dirname, '../frontend/.next/static')))
+  
+  // Handle all other routes - serve Next.js app
+  app.get('*', (_req, res) => {
+
+    res.sendFile(path.join(__dirname, '../frontend/.next/standalone/index.html'))
+  })
+}
+
+
 // Error handling middleware
 app.use(errorHandler)
 
