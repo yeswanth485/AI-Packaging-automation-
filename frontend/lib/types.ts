@@ -94,10 +94,16 @@ export interface SimulationHistory {
 // Dashboard types
 export interface DashboardKPIs {
   totalSimulations: number;
+  totalOrders?: number;
   totalSavings: number;
   avgSavings: number;
+  savingsPercentage?: number;
+  averageUtilization?: number;
+  monthlySavings?: number;
+  annualSavings?: number;
   activeSubscription?: string;
 }
+
 
 export interface CostTrendData {
   date: string;
