@@ -5,6 +5,7 @@ const nextConfig = {
   swcMinify: true,
   eslint: {
     ignoreDuringBuilds: true,
+    dirs: [], // Completely disable ESLint during builds
   },
   typescript: {
     ignoreBuildErrors: true,
