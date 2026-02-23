@@ -48,11 +48,28 @@ export interface SimulationResult {
     baseline: PackingResult;
     optimized: PackingResult;
     savings: SavingsMetrics;
+    summary?: {
+      totalOrders: number;
+      totalSavings: number;
+      savingsPercentage: number;
+      averageUtilization: number;
+    };
+    orders?: OrderResult[];
   };
   metrics?: SimulationMetrics;
   error?: string;
   createdAt?: string;
   completedAt?: string;
+}
+
+export interface OrderResult {
+  orderId: string;
+  originalBox?: string;
+  optimizedBox: string;
+  baselineCost: number;
+  optimizedCost: number;
+  savings: number;
+  utilization: number;
 }
 
 export interface PackingResult {
@@ -89,6 +106,9 @@ export interface SimulationHistory {
   itemCount?: number;
   costSavings?: number;
   results?: SimulationResult['results'];
+  totalOrders?: number;
+  totalSavings?: number;
+  savingsPercentage?: number;
 }
 
 // Dashboard types

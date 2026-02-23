@@ -168,7 +168,7 @@ export default function SimulationPage() {
                 className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
               >
                 <div>
-                  <div className="font-medium text-gray-900">{sim.filename}</div>
+                  <div className="font-medium text-gray-900">{sim.fileName}</div>
                   <div className="text-sm text-gray-500">
                     {new Date(sim.createdAt).toLocaleString()} • {sim.totalOrders} orders
                   </div>
