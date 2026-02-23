@@ -138,7 +138,7 @@ export class BoxCatalogManager {
       orderBy: { volume: 'asc' }, // Sort by volume ascending
     })
 
-    const result = boxes.map((box) => this.mapToBox(box))
+    const result = boxes.map((box: any) => this.mapToBox(box))
 
     // Cache the result
     await cacheService.setBoxCatalog(activeOnly, result)
@@ -278,9 +278,9 @@ export class BoxCatalogManager {
    */
   private checkDimensionFit(box: Box, requiredDimensions: Dimensions): boolean {
     // Sort both box and required dimensions in descending order
-    const boxDims = [box.length, box.width, box.height].sort((a, b) => b - a)
+    const boxDims = [box.length, box.width, box.height].sort((a: number, b: number) => b - a)
     const reqDims = [requiredDimensions.length, requiredDimensions.width, requiredDimensions.height].sort(
-      (a, b) => b - a
+      (a: number, b: number) => b - a
     )
 
     // Check if each required dimension fits in corresponding box dimension

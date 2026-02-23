@@ -221,7 +221,7 @@ export class SubscriptionService {
     const now = new Date()
 
     // Requirement 24.3: Use transaction with atomic operations to prevent race conditions
-    const result = await this.prisma.$transaction(async (tx) => {
+    const result = await this.prisma.$transaction(async (tx: any) => {
       // Create usage record
       const usageRecord = await tx.usageRecord.create({
         data: {
@@ -278,7 +278,7 @@ export class SubscriptionService {
       orderBy: { timestamp: 'desc' },
     })
 
-    return records.map((record) => ({
+    return records.map((record: any) => ({
       recordId: record.id,
       userId: record.userId,
       timestamp: record.timestamp,
@@ -311,7 +311,7 @@ export class SubscriptionService {
       },
     })
 
-    const totalOrders = usageRecords.reduce((sum, record) => sum + record.orderCount, 0)
+    const totalOrders = usageRecords.reduce((sum: number, record: any) => sum + record.orderCount, 0)
     const basePrice = subscription.price
 
     // Calculate overage charges for enterprise tier
@@ -392,7 +392,7 @@ export class SubscriptionService {
       },
     })
 
-    return usageRecords.reduce((sum, record) => sum + record.orderCount, 0)
+    return usageRecords.reduce((sum: number, record: any) => sum + record.orderCount, 0)
   }
 
   /**
