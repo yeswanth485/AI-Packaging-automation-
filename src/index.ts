@@ -18,7 +18,19 @@ import subscriptionRoutes from './routes/subscription.routes'
 import analyticsRoutes from './routes/analytics.routes'
 import configRoutes from './routes/config.routes'
 
+// Load environment variables
 dotenv.config()
+
+// Validate critical environment variables for production
+if (process.env.NODE_ENV === 'production') {
+  const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'SESSION_SECRET']
+  const missingVars = requiredEnvVars.filter(varName => !process.env[varName])
+  
+  if (missingVars.length > 0) {
+    logger.error(`Missing required environment variables: ${missingVars.join(', ')}`)
+    process.exit(1)
+  }
+}
 
 const app = express()
 const PORT = process.env.PORT || 3000

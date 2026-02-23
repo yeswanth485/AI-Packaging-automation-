@@ -1,0 +1,17 @@
+[phases.setup]
+nixPkgs = ["nodejs-18_x", "npm-9_x"]
+
+[phases.install]
+cmds = [
+    "npm ci --only=production",
+    "npx prisma generate"
+]
+
+[phases.build]
+cmds = [
+    "npm run build",
+    "cd frontend && npm ci && npm run build && cd .."
+]
+
+[start]
+cmd = "npx prisma migrate deploy && node dist/index.js"

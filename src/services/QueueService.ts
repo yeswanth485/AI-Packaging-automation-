@@ -1,5 +1,4 @@
 import Bull, { Queue, Job, JobOptions } from 'bull'
-import { redis } from '../config/redis'
 import { logger } from '../utils/logger'
 
 /**
@@ -58,15 +57,20 @@ export class QueueService {
    * Initialize all job queues
    */
   private initializeQueues(): void {
+    // Redis configuration for Bull queues
+    const redisConfig = process.env.REDIS_URL 
+      ? process.env.REDIS_URL
+      : {
+          host: process.env.REDIS_HOST || 'localhost',
+          port: parseInt(process.env.REDIS_PORT || '6379'),
+          password: process.env.REDIS_PASSWORD || undefined,
+        }
+
     // CSV Processing Queue
     this.queues.set(
       JobType.CSV_PROCESSING,
       new Bull(JobType.CSV_PROCESSING, {
-        redis: {
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          password: process.env.REDIS_PASSWORD || undefined,
-        },
+        redis: redisConfig,
         defaultJobOptions: {
           ...this.defaultJobOptions,
           timeout: 300000, // 5 minutes
@@ -78,11 +82,7 @@ export class QueueService {
     this.queues.set(
       JobType.PDF_GENERATION,
       new Bull(JobType.PDF_GENERATION, {
-        redis: {
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          password: process.env.REDIS_PASSWORD || undefined,
-        },
+        redis: redisConfig,
         defaultJobOptions: {
           ...this.defaultJobOptions,
           timeout: 60000, // 1 minute
@@ -94,11 +94,7 @@ export class QueueService {
     this.queues.set(
       JobType.SIMULATION_PROCESSING,
       new Bull(JobType.SIMULATION_PROCESSING, {
-        redis: {
-          host: process.env.REDIS_HOST || 'localhost',
-          port: parseInt(process.env.REDIS_PORT || '6379'),
-          password: process.env.REDIS_PASSWORD || undefined,
-        },
+        redis: redisConfig,
         defaultJobOptions: {
           ...this.defaultJobOptions,
           timeout: 300000, // 5 minutes

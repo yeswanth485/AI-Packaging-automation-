@@ -111,7 +111,7 @@ export class ReportGenerator {
     return fs.existsSync(this.getReportPath(reportId))
   }
 
-  private addHeader(doc: PDFDocument, result: SimulationResult): void {
+  private addHeader(doc: InstanceType<typeof PDFDocument>, result: SimulationResult): void {
     doc
       .fontSize(24)
       .font('Helvetica-Bold')
@@ -126,7 +126,7 @@ export class ReportGenerator {
       .moveDown(2)
   }
 
-  private addExecutiveSummary(doc: PDFDocument, result: SimulationResult): void {
+  private addExecutiveSummary(doc: InstanceType<typeof PDFDocument>, result: SimulationResult): void {
     doc
       .fontSize(16)
       .font('Helvetica-Bold')
@@ -135,7 +135,7 @@ export class ReportGenerator {
       .fontSize(11)
       .font('Helvetica')
 
-    const { comparison, savings } = result
+    const { comparison } = result
 
     doc
       .text(
@@ -147,7 +147,7 @@ export class ReportGenerator {
       .moveDown()
   }
 
-  private addKPIsSection(doc: PDFDocument, result: SimulationResult): void {
+  private addKPIsSection(doc: InstanceType<typeof PDFDocument>, result: SimulationResult): void {
     const { comparison } = result
 
     doc
@@ -193,11 +193,11 @@ export class ReportGenerator {
     doc.moveDown()
   }
 
-  private addKPI(doc: PDFDocument, label: string, value: string): void {
+  private addKPI(doc: InstanceType<typeof PDFDocument>, label: string, value: string): void {
     doc.font('Helvetica-Bold').text(label + ': ', { continued: true }).font('Helvetica').text(value)
   }
 
-  private addSavingsAnalysis(doc: PDFDocument, result: SimulationResult): void {
+  private addSavingsAnalysis(doc: InstanceType<typeof PDFDocument>, result: SimulationResult): void {
     const { savings } = result
 
     doc
@@ -218,7 +218,7 @@ export class ReportGenerator {
     doc.moveDown()
   }
 
-  private addBoxUsageDistribution(doc: PDFDocument, result: SimulationResult): void {
+  private addBoxUsageDistribution(doc: InstanceType<typeof PDFDocument>, result: SimulationResult): void {
     doc
       .fontSize(14)
       .font('Helvetica-Bold')
@@ -279,7 +279,7 @@ export class ReportGenerator {
     return usageData.sort((a, b) => b.usageCount - a.usageCount)
   }
 
-  private addCostComparison(doc: PDFDocument, result: SimulationResult): void {
+  private addCostComparison(doc: InstanceType<typeof PDFDocument>, result: SimulationResult): void {
     const { comparison } = result
 
     doc
@@ -347,7 +347,7 @@ export class ReportGenerator {
     doc.moveDown(8)
   }
 
-  private addRecommendations(doc: PDFDocument, result: SimulationResult): void {
+  private addRecommendations(doc: InstanceType<typeof PDFDocument>, result: SimulationResult): void {
     doc
       .fontSize(14)
       .font('Helvetica-Bold')
@@ -369,7 +369,7 @@ export class ReportGenerator {
     doc.moveDown()
   }
 
-  private addAnomalyWarnings(doc: PDFDocument, result: SimulationResult): void {
+  private addAnomalyWarnings(doc: InstanceType<typeof PDFDocument>, result: SimulationResult): void {
     doc
       .fontSize(14)
       .font('Helvetica-Bold')
@@ -381,14 +381,14 @@ export class ReportGenerator {
       .fillColor('#000000')
 
     // Requirement 8.9: Anomaly warnings
-    result.anomalyWarnings.forEach((warning, index) => {
+    result.anomalyWarnings.forEach((warning) => {
       doc.text(`⚠ ${warning}`).moveDown(0.3)
     })
 
     doc.moveDown()
   }
 
-  private addFooter(doc: PDFDocument): void {
+  private addFooter(doc: InstanceType<typeof PDFDocument>): void {
     doc
       .fontSize(9)
       .font('Helvetica')

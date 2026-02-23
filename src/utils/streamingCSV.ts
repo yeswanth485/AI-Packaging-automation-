@@ -133,13 +133,11 @@ export class StreamingCSVProcessor {
   ): Promise<{ valid: boolean; missingHeaders: string[]; headers: string[] }> {
     return new Promise((resolve, reject) => {
       let headers: string[] = []
-      let headersParsed = false
 
       fileStream
         .pipe(csvParser())
         .on('headers', (parsedHeaders: string[]) => {
           headers = parsedHeaders
-          headersParsed = true
 
           // Check for missing headers
           const missingHeaders = requiredHeaders.filter(

@@ -44,10 +44,10 @@ export class SubscriptionService {
       data: {
         id: uuidv4(),
         userId,
-        tier,
+        tier: tier as any, // Cast to Prisma enum type
         monthlyQuota: config.quota,
         currentUsage: 0,
-        status: SubscriptionStatus.ACTIVE,
+        status: 'ACTIVE', // Use string literal instead of enum
         startDate: now,
         renewalDate,
         price: config.price,
@@ -145,7 +145,7 @@ export class SubscriptionService {
         version: existing.version, // Ensure version hasn't changed
       },
       data: {
-        status: SubscriptionStatus.CANCELLED,
+        status: 'CANCELLED', // Use string literal instead of enum
         autoRenew: false,
         version: { increment: 1 }, // Increment version
       },
@@ -316,7 +316,7 @@ export class SubscriptionService {
 
     // Calculate overage charges for enterprise tier
     let overageCharges = 0
-    if (subscription.tier === SubscriptionTier.ENTERPRISE) {
+    if (subscription.tier === 'ENTERPRISE') { // Use string literal instead of enum
       // Example: $0.10 per order over base amount
       const baseIncluded = 10000
       if (totalOrders > baseIncluded) {
@@ -332,13 +332,13 @@ export class SubscriptionService {
       data: {
         id: uuidv4(),
         subscriptionId,
-        billingPeriodStart: billingPeriod.startDate,
-        billingPeriodEnd: billingPeriod.endDate,
+        startDate: billingPeriod.startDate,
+        endDate: billingPeriod.endDate,
         totalOrders,
         basePrice,
         overageCharges,
         totalAmount,
-        status: InvoiceStatus.PENDING,
+        status: 'PENDING', // Use string literal instead of enum
         dueDate,
       },
     })
@@ -347,8 +347,8 @@ export class SubscriptionService {
       invoiceId: invoice.id,
       subscriptionId: invoice.subscriptionId,
       billingPeriod: {
-        startDate: invoice.billingPeriodStart,
-        endDate: invoice.billingPeriodEnd,
+        startDate: invoice.startDate,
+        endDate: invoice.endDate,
       },
       totalOrders: invoice.totalOrders,
       basePrice: invoice.basePrice,

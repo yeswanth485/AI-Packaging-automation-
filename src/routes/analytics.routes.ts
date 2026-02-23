@@ -3,6 +3,7 @@ import { PrismaClient } from '@prisma/client'
 import { authenticate } from '../middleware/auth'
 import { validateQuery } from '../middleware/validation'
 import { AnalyticsService } from '../services/AnalyticsService'
+import { TimeGranularity } from '../types'
 import Joi from 'joi'
 
 const router = Router()
@@ -18,7 +19,7 @@ const dateRangeSchema = Joi.object({
 const trendSchema = Joi.object({
   startDate: Joi.date().iso().optional(),
   endDate: Joi.date().iso().optional(),
-  granularity: Joi.string().valid('DAILY', 'WEEKLY', 'MONTHLY').optional(),
+  granularity: Joi.string().valid('daily', 'weekly', 'monthly').optional(),
 })
 
 const forecastSchema = Joi.object({
@@ -41,7 +42,10 @@ router.get(
       const dateRange = startDate && endDate ? {
         startDate: new Date(startDate as string),
         endDate: new Date(endDate as string),
-      } : undefined
+      } : {
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        endDate: new Date(),
+      }
 
       const kpis = await analyticsService.getDashboardKPIs(userId, dateRange)
 
@@ -83,12 +87,15 @@ router.get(
       const userId = req.user!.id
       const { startDate, endDate, granularity } = req.query
 
-      const dateRange = startDate && endDate ? { startDate: new Date(startDate as string), endDate: new Date(endDate as string) } : undefined
+      const dateRange = startDate && endDate ? { startDate: new Date(startDate as string), endDate: new Date(endDate as string) } : {
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        endDate: new Date(),
+      }
 
       const costTrend = await analyticsService.getCostTrend(
         userId,
         dateRange,
-        (granularity as 'DAILY' | 'WEEKLY' | 'MONTHLY') || 'DAILY'
+        (granularity as TimeGranularity) || TimeGranularity.DAILY
       )
 
       res.status(200).json({
@@ -125,7 +132,10 @@ router.get(
       const userId = req.user!.id
       const { startDate, endDate } = req.query
 
-      const dateRange = startDate && endDate ? { startDate: new Date(startDate as string), endDate: new Date(endDate as string) } : undefined
+      const dateRange = startDate && endDate ? { startDate: new Date(startDate as string), endDate: new Date(endDate as string) } : {
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        endDate: new Date(),
+      }
 
       const boxUsage = await analyticsService.getBoxUsageDistribution(
         userId,
@@ -164,7 +174,10 @@ router.get(
       const userId = req.user!.id
       const { startDate, endDate } = req.query
 
-      const dateRange = startDate && endDate ? { startDate: new Date(startDate as string), endDate: new Date(endDate as string) } : undefined
+      const dateRange = startDate && endDate ? { startDate: new Date(startDate as string), endDate: new Date(endDate as string) } : {
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        endDate: new Date(),
+      }
 
       const heatmap = await analyticsService.getSpaceWasteHeatmap(
         userId,
@@ -201,7 +214,10 @@ router.get(
       const userId = req.user!.id
       const { startDate, endDate } = req.query
 
-      const dateRange = startDate && endDate ? { startDate: new Date(startDate as string), endDate: new Date(endDate as string) } : undefined
+      const dateRange = startDate && endDate ? { startDate: new Date(startDate as string), endDate: new Date(endDate as string) } : {
+        startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // 30 days ago
+        endDate: new Date(),
+      }
 
       const weightDistribution =
         await analyticsService.getWeightDistribution(userId, dateRange)

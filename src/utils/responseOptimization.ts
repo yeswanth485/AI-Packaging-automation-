@@ -13,7 +13,7 @@ export function optimizedJSONStringify(obj: any, space?: number): string {
 
   return JSON.stringify(
     obj,
-    (key, value) => {
+    (_, value) => {
       // Handle circular references
       if (typeof value === 'object' && value !== null) {
         if (seen.has(value)) {

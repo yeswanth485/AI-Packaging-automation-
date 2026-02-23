@@ -24,8 +24,6 @@ export interface HealthCheckDetail {
  * Perform comprehensive health check
  */
 export async function performHealthCheck(): Promise<HealthCheckResult> {
-  const startTime = Date.now()
-  
   // Check database connectivity
   const databaseCheck = await checkDatabase()
   

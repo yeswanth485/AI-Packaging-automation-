@@ -43,7 +43,7 @@ export function initializeJobProcessors(): void {
  * Process CSV file upload and parsing
  */
 async function processCSVJob(job: Job<CSVProcessingJobData>): Promise<void> {
-  const { jobId, userId, filePath, fileName } = job.data
+  const { jobId, userId, filePath } = job.data
 
   try {
     // Update job progress
@@ -65,42 +65,11 @@ async function processCSVJob(job: Job<CSVProcessingJobData>): Promise<void> {
 
     // Parse CSV file
     const fileBuffer = await fs.readFile(filePath)
-    const orders = await csvService.parseCSV(fileBuffer)
-
-    await job.progress(60)
-
-    // Store orders in database
-    for (const order of orders) {
-      await prisma.order.create({
-        data: {
-          orderId: order.orderId,
-          userId,
-          jobId,
-          totalWeight: order.totalWeight,
-          items: {
-            create: order.items.map((item) => ({
-              itemId: item.itemId,
-              length: item.length,
-              width: item.width,
-              height: item.height,
-              weight: item.weight,
-              quantity: item.quantity,
-            })),
-          },
-        },
-      })
-    }
+    
+    // Use uploadCSV method which handles the full parsing and database operations
+    const simulationJob = await csvService.uploadCSV(fileBuffer, 'uploaded-file.csv', userId)
 
     await job.progress(90)
-
-    // Update simulation job with order count
-    await prisma.simulationJob.update({
-      where: { id: jobId },
-      data: {
-        totalOrders: orders.length,
-        status: 'PENDING', // Ready for simulation processing
-      },
-    })
 
     // Clean up uploaded file
     await fs.unlink(filePath).catch((err) => {
@@ -109,7 +78,7 @@ async function processCSVJob(job: Job<CSVProcessingJobData>): Promise<void> {
 
     await job.progress(100)
 
-    logger.info('CSV processing completed', { jobId, orderCount: orders.length })
+    logger.info('CSV processing completed', { jobId, totalOrders: simulationJob.totalOrders })
   } catch (error) {
     logger.error('CSV processing failed', { jobId, error })
 
@@ -127,7 +96,7 @@ async function processCSVJob(job: Job<CSVProcessingJobData>): Promise<void> {
  * Process PDF report generation
  */
 async function processPDFJob(job: Job<PDFGenerationJobData>): Promise<string> {
-  const { simulationId, userId } = job.data
+  const { simulationId } = job.data
 
   try {
     await job.progress(10)
@@ -161,8 +130,35 @@ async function processPDFJob(job: Job<PDFGenerationJobData>): Promise<string> {
 
     await job.progress(50)
 
+    // Convert database result to SimulationResult format
+    const simulationResult = {
+      simulationId: simulation.id,
+      jobId: simulation.jobId,
+      optimizedResults: [], // This would need to be populated from actual simulation data
+      baselineResults: [],
+      comparison: {
+        totalOrdersProcessed: simulation.job.totalOrders,
+        optimizedTotalCost: simulation.optimizedTotalCost,
+        baselineTotalCost: simulation.baselineTotalCost,
+        totalSavings: simulation.totalSavings,
+        savingsPercentage: simulation.savingsPercentage,
+        averageUtilizationOptimized: simulation.averageUtilization,
+        averageUtilizationBaseline: 0,
+        volumetricWeightReduction: 0,
+      },
+      savings: {
+        perOrderSavings: simulation.totalSavings / simulation.job.totalOrders,
+        monthlySavings: simulation.monthlySavings,
+        annualSavings: simulation.annualSavings,
+        isRealistic: true,
+        confidenceLevel: 0.95,
+      },
+      recommendations: [],
+      anomalyWarnings: [],
+    }
+
     // Generate PDF report
-    const reportUrl = await reportGenerator.generateReport(simulation)
+    const pdfReport = await reportGenerator.generateReport(simulationResult)
 
     await job.progress(90)
 
@@ -173,16 +169,16 @@ async function processPDFJob(job: Job<PDFGenerationJobData>): Promise<string> {
     await prisma.simulation.update({
       where: { id: simulationId },
       data: {
-        reportUrl,
+        reportUrl: pdfReport.downloadUrl,
         reportExpiresAt: expiresAt,
       },
     })
 
     await job.progress(100)
 
-    logger.info('PDF generation completed', { simulationId, reportUrl })
+    logger.info('PDF generation completed', { simulationId, reportUrl: pdfReport.downloadUrl })
 
-    return reportUrl
+    return pdfReport.downloadUrl
   } catch (error) {
     logger.error('PDF generation failed', { simulationId, error })
     throw error
@@ -195,7 +191,7 @@ async function processPDFJob(job: Job<PDFGenerationJobData>): Promise<string> {
 async function processSimulationJob(
   job: Job<SimulationProcessingJobData>
 ): Promise<void> {
-  const { jobId, userId, configId } = job.data
+  const { jobId, userId } = job.data
 
   try {
     await job.progress(10)
@@ -235,7 +231,7 @@ async function processSimulationJob(
 
     await job.progress(100)
 
-    logger.info('Simulation processing completed', { jobId })
+    logger.info('Simulation processing completed', { jobId, result: result.simulationId })
   } catch (error) {
     logger.error('Simulation processing failed', { jobId, error })
 

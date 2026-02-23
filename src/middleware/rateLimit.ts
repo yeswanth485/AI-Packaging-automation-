@@ -75,9 +75,7 @@ export const rateLimit = (options: RateLimitOptions) => {
       // Increment counter
       if (count === 0) {
         // First request in window, set with expiration
-        await redisClient.set(windowKey, '1', {
-          PX: windowMs,
-        })
+        await redisClient.set(windowKey, '1', 'PX', windowMs)
       } else {
         // Increment existing counter
         await redisClient.incr(windowKey)
@@ -143,9 +141,7 @@ export const rateLimitByIP = (options: RateLimitOptions) => {
 
       // Increment counter
       if (count === 0) {
-        await redisClient.set(windowKey, '1', {
-          PX: windowMs,
-        })
+        await redisClient.set(windowKey, '1', 'PX', windowMs)
       } else {
         await redisClient.incr(windowKey)
       }
