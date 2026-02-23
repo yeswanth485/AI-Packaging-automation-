@@ -113,8 +113,8 @@ export class SimulationService {
       const anomalyWarnings = this.generateAnomalyWarnings(savings)
 
       // Use transaction to create simulation and update job atomically
-      const result = await prisma.$transaction(async (tx) => {
-        // Create simulation result
+      const result = await prisma.$transaction(async (tx: any) => {
+      const result = await prisma.$transaction(async (tx: any) => {
         const simulation = await tx.simulation.create({
           data: {
             jobId,
@@ -347,3 +347,4 @@ export class SimulationService {
     return this.csvParser.getSimulationJob(jobId)
   }
 }
+
