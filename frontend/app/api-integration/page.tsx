@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import type { APIError } from '@/lib/types'
 
 export default function APIIntegrationPage() {
   const [apiKey, setApiKey] = useState('')
@@ -18,8 +19,9 @@ export default function APIIntegrationPage() {
     try {
       // In a real app, this would fetch the existing API key (masked)
       setApiKey('sk_test_••••••••••••••••••••••••••••1234')
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load API key')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to load API key')
     } finally {
       setLoading(false)
     }
@@ -30,10 +32,11 @@ export default function APIIntegrationPage() {
 
     try {
       const response = await api.generateAPIKey()
-      setApiKey(response.data.apiKey)
+      setApiKey(response.apiKey)
       setShowKey(true)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to generate API key')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to generate API key')
     }
   }
 

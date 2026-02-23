@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import type { APIError } from '@/lib/types'
 
 export default function ConfigPage() {
   const [loading, setLoading] = useState(true)
@@ -27,8 +28,9 @@ export default function ConfigPage() {
         volumetricDivisor: data.volumetricDivisor?.toString() || '166',
         shippingRate: data.shippingRate?.toString() || '0.5',
       })
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load configuration')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to load configuration')
     } finally {
       setLoading(false)
     }
@@ -50,8 +52,9 @@ export default function ConfigPage() {
       await api.updateConfiguration(data)
       setSuccess('Configuration saved successfully')
       setTimeout(() => setSuccess(''), 3000)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save configuration')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to save configuration')
     } finally {
       setSaving(false)
     }

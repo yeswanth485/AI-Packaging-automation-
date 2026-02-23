@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import type { BoxUsageData, CostTrendData, APIError } from '@/lib/types'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
 
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [boxUsage, setBoxUsage] = useState<any[]>([])
-  const [costTrend, setCostTrend] = useState<any[]>([])
+  const [boxUsage, setBoxUsage] = useState<BoxUsageData[]>([])
+  const [costTrend, setCostTrend] = useState<CostTrendData[]>([])
 
   useEffect(() => {
     loadAnalytics()
@@ -24,8 +25,9 @@ export default function AnalyticsPage() {
       ])
       setBoxUsage(usageResponse.data || [])
       setCostTrend(trendResponse.data || [])
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load analytics')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to load analytics')
     } finally {
       setLoading(false)
     }

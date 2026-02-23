@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import CSVUpload from '@/components/simulation/CSVUpload'
 import ResultsTable from '@/components/simulation/ResultsTable'
+import type { SimulationResult, SimulationHistory, APIError } from '@/lib/types'
 
 export default function SimulationPage() {
   const [uploading, setUploading] = useState(false)
   const [processing, setProcessing] = useState(false)
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
-  const [results, setResults] = useState<any>(null)
-  const [history, setHistory] = useState<any[]>([])
+  const [results, setResults] = useState<SimulationResult['results'] | null>(null)
+  const [history, setHistory] = useState<SimulationHistory[]>([])
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -28,7 +29,7 @@ export default function SimulationPage() {
     try {
       const response = await api.getSimulationHistory()
       setHistory(response.data || [])
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load history:', err)
     }
   }
@@ -44,8 +45,9 @@ export default function SimulationPage() {
       // Start processing
       await api.processSimulation(jobId)
       setProcessing(true)
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Upload failed')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Upload failed')
     } finally {
       setUploading(false)
     }
@@ -66,7 +68,7 @@ export default function SimulationPage() {
         setError(status.error || 'Simulation failed')
         setProcessing(false)
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Status check failed:', err)
     }
   }
@@ -82,7 +84,7 @@ export default function SimulationPage() {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
-    } catch (err: any) {
+    } catch (err) {
       setError('Failed to download report')
     }
   }

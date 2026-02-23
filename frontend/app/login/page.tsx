@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useAuth } from '@/lib/auth-context'
+import type { APIError } from '@/lib/types'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -21,8 +22,9 @@ export default function LoginPage() {
     try {
       await login(email, password)
       router.push('/dashboard')
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed. Please try again.')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Login failed. Please try again.')
     } finally {
       setLoading(false)
     }

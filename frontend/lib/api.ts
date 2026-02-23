@@ -1,4 +1,19 @@
-import axios, { AxiosInstance, AxiosRequestConfig } from 'axios'
+import axios, { AxiosInstance } from 'axios'
+import type {
+  Box,
+  BoxFormData,
+  Subscription,
+  QuotaStatus,
+  UsageHistory,
+  SimulationResult,
+  SimulationHistory,
+  DashboardKPIs,
+  CostTrendData,
+  BoxUsageData,
+  ConfigurationData,
+  AuthResponse,
+  MessageResponse,
+} from './types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
 
@@ -88,13 +103,13 @@ class APIClient {
   }
 
   // Authentication
-  async register(email: string, password: string) {
-    const response = await this.client.post('/auth/register', { email, password })
+  async register(email: string, password: string): Promise<AuthResponse> {
+    const response = await this.client.post<AuthResponse>('/auth/register', { email, password })
     return response.data
   }
 
-  async login(email: string, password: string) {
-    const response = await this.client.post('/auth/login', { email, password })
+  async login(email: string, password: string): Promise<AuthResponse> {
+    const response = await this.client.post<AuthResponse>('/auth/login', { email, password })
     const { accessToken, refreshToken } = response.data.data
     
     if (typeof window !== 'undefined') {
@@ -105,51 +120,51 @@ class APIClient {
     return response.data
   }
 
-  async logout() {
+  async logout(): Promise<void> {
     try {
-      await this.client.post('/auth/logout')
+      await this.client.post<MessageResponse>('/auth/logout')
     } finally {
       this.clearTokens()
     }
   }
 
-  async generateAPIKey() {
-    const response = await this.client.post('/auth/api-key')
+  async generateAPIKey(): Promise<{ apiKey: string }> {
+    const response = await this.client.post<{ apiKey: string }>('/auth/api-key')
     return response.data
   }
 
   // Box Catalog
-  async getBoxes() {
-    const response = await this.client.get('/boxes')
+  async getBoxes(): Promise<{ data: Box[] }> {
+    const response = await this.client.get<{ data: Box[] }>('/boxes')
     return response.data
   }
 
-  async getBox(id: string) {
-    const response = await this.client.get(`/boxes/${id}`)
+  async getBox(id: string): Promise<{ data: Box }> {
+    const response = await this.client.get<{ data: Box }>(`/boxes/${id}`)
     return response.data
   }
 
-  async createBox(data: any) {
-    const response = await this.client.post('/boxes', data)
+  async createBox(data: BoxFormData): Promise<{ data: Box }> {
+    const response = await this.client.post<{ data: Box }>('/boxes', data)
     return response.data
   }
 
-  async updateBox(id: string, data: any) {
-    const response = await this.client.put(`/boxes/${id}`, data)
+  async updateBox(id: string, data: BoxFormData): Promise<{ data: Box }> {
+    const response = await this.client.put<{ data: Box }>(`/boxes/${id}`, data)
     return response.data
   }
 
-  async deleteBox(id: string) {
-    const response = await this.client.delete(`/boxes/${id}`)
+  async deleteBox(id: string): Promise<MessageResponse> {
+    const response = await this.client.delete<MessageResponse>(`/boxes/${id}`)
     return response.data
   }
 
   // Simulation
-  async uploadCSV(file: File) {
+  async uploadCSV(file: File): Promise<{ data: { jobId: string } }> {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await this.client.post('/simulation/upload', formData, {
+    const response = await this.client.post<{ data: { jobId: string } }>('/simulation/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
@@ -157,79 +172,79 @@ class APIClient {
     return response.data
   }
 
-  async processSimulation(jobId: string, config?: any) {
-    const response = await this.client.post(`/simulation/${jobId}/process`, config)
+  async processSimulation(jobId: string, config?: Record<string, unknown>): Promise<{ data: SimulationResult }> {
+    const response = await this.client.post<{ data: SimulationResult }>(`/simulation/${jobId}/process`, config)
     return response.data
   }
 
-  async getSimulationStatus(jobId: string) {
-    const response = await this.client.get(`/simulation/${jobId}/status`)
+  async getSimulationStatus(jobId: string): Promise<{ data: SimulationResult }> {
+    const response = await this.client.get<{ data: SimulationResult }>(`/simulation/${jobId}/status`)
     return response.data
   }
 
-  async getSimulationHistory() {
-    const response = await this.client.get('/simulation/history')
+  async getSimulationHistory(): Promise<{ data: SimulationHistory[] }> {
+    const response = await this.client.get<{ data: SimulationHistory[] }>('/simulation/history')
     return response.data
   }
 
-  async generateReport(simulationId: string) {
-    const response = await this.client.get(`/simulation/${simulationId}/report`, {
+  async generateReport(simulationId: string): Promise<Blob> {
+    const response = await this.client.get<Blob>(`/simulation/${simulationId}/report`, {
       responseType: 'blob',
     })
     return response.data
   }
 
   // Analytics
-  async getDashboardKPIs(startDate?: string, endDate?: string) {
-    const response = await this.client.get('/analytics/dashboard', {
+  async getDashboardKPIs(startDate?: string, endDate?: string): Promise<{ data: DashboardKPIs }> {
+    const response = await this.client.get<{ data: DashboardKPIs }>('/analytics/dashboard', {
       params: { startDate, endDate },
     })
     return response.data
   }
 
-  async getCostTrend(granularity: string, startDate?: string, endDate?: string) {
-    const response = await this.client.get('/analytics/cost-trend', {
+  async getCostTrend(granularity: string, startDate?: string, endDate?: string): Promise<{ data: CostTrendData[] }> {
+    const response = await this.client.get<{ data: CostTrendData[] }>('/analytics/cost-trend', {
       params: { granularity, startDate, endDate },
     })
     return response.data
   }
 
-  async getBoxUsage(startDate?: string, endDate?: string) {
-    const response = await this.client.get('/analytics/box-usage', {
+  async getBoxUsage(startDate?: string, endDate?: string): Promise<{ data: BoxUsageData[] }> {
+    const response = await this.client.get<{ data: BoxUsageData[] }>('/analytics/box-usage', {
       params: { startDate, endDate },
     })
     return response.data
   }
 
   // Subscriptions
-  async getSubscription() {
-    const response = await this.client.get('/subscriptions/me')
+  async getSubscription(): Promise<{ data: Subscription }> {
+    const response = await this.client.get<{ data: Subscription }>('/subscriptions/me')
     return response.data
   }
 
-  async updateSubscription(tier: string) {
-    const response = await this.client.put('/subscriptions/me', { tier })
+  async updateSubscription(tier: string): Promise<{ data: Subscription }> {
+    const response = await this.client.put<{ data: Subscription }>('/subscriptions/me', { tier })
     return response.data
   }
 
-  async getQuotaStatus() {
-    const response = await this.client.get('/subscriptions/quota')
+  async getQuotaStatus(): Promise<{ data: QuotaStatus }> {
+    const response = await this.client.get<{ data: QuotaStatus }>('/subscriptions/quota')
     return response.data
   }
 
-  async getUsageHistory() {
-    const response = await this.client.get('/subscriptions/usage')
+  async getUsageHistory(): Promise<{ data: UsageHistory[] }> {
+    const response = await this.client.get<{ data: UsageHistory[] }>('/subscriptions/usage')
     return response.data
   }
 
   // Configuration
-  async getConfiguration() {
-    const response = await this.client.get('/config')
+  async getConfiguration(): Promise<{ data: ConfigurationData }> {
+    const response = await this.client.get<{ data: ConfigurationData }>('/config')
     return response.data
   }
 
-  async updateConfiguration(config: any) {
-    const response = await this.client.put('/config', config)
+  async updateConfiguration(config: Partial<ConfigurationData>): Promise<{ data: ConfigurationData }> {
+    const response = await this.client.put<{ data: ConfigurationData }>('/config', config)
     return response.data
   }
 }

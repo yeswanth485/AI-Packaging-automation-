@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import type { User, APIError } from '@/lib/types'
 
 export default function AdminPage() {
   const { user } = useAuth()
@@ -12,7 +13,7 @@ export default function AdminPage() {
     totalSimulations: 0,
     totalRevenue: 0,
   })
-  const [users, setUsers] = useState<any[]>([])
+  const [users, setUsers] = useState<User[]>([])
 
   useEffect(() => {
     if (user?.role !== 'ADMIN') {
@@ -35,29 +36,29 @@ export default function AdminPage() {
         {
           id: '1',
           email: 'user1@example.com',
-          tier: 'PROFESSIONAL',
-          status: 'ACTIVE',
+          role: 'user',
           createdAt: '2024-01-15',
           lastLogin: '2024-03-20',
+          isActive: true,
         },
         {
           id: '2',
           email: 'user2@example.com',
-          tier: 'BASIC',
-          status: 'ACTIVE',
+          role: 'user',
           createdAt: '2024-02-01',
           lastLogin: '2024-03-19',
+          isActive: true,
         },
         {
           id: '3',
           email: 'user3@example.com',
-          tier: 'FREE',
-          status: 'INACTIVE',
+          role: 'user',
           createdAt: '2024-03-01',
           lastLogin: '2024-03-10',
+          isActive: false,
         },
       ])
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load admin data:', err)
     } finally {
       setLoading(false)
@@ -124,7 +125,7 @@ export default function AdminPage() {
                 Email
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Tier
+                Role
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -147,24 +148,24 @@ export default function AdminPage() {
                   {user.email}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {user.tier}
+                  {user.role}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span
                     className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      user.status === 'ACTIVE'
+                      user.isActive
                         ? 'bg-green-100 text-green-800'
                         : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    {user.status}
+                    {user.isActive ? 'ACTIVE' : 'INACTIVE'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(user.lastLogin).toLocaleDateString()}
+                  {user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button className="text-blue-600 hover:text-blue-900 mr-4">

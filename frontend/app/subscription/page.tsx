@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import type { Subscription, QuotaStatus, UsageHistory, APIError } from '@/lib/types'
 
 const TIERS = [
   {
@@ -54,9 +55,9 @@ const TIERS = [
 ]
 
 export default function SubscriptionPage() {
-  const [subscription, setSubscription] = useState<any>(null)
-  const [quota, setQuota] = useState<any>(null)
-  const [usageHistory, setUsageHistory] = useState<any[]>([])
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [quota, setQuota] = useState<QuotaStatus | null>(null)
+  const [usageHistory, setUsageHistory] = useState<UsageHistory[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -74,8 +75,9 @@ export default function SubscriptionPage() {
       setSubscription(subResponse.data)
       setQuota(quotaResponse.data)
       setUsageHistory(historyResponse.data || [])
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load subscription data')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to load subscription data')
     } finally {
       setLoading(false)
     }
@@ -87,8 +89,9 @@ export default function SubscriptionPage() {
     try {
       await api.updateSubscription(tier)
       loadSubscriptionData()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to update subscription')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to update subscription')
     }
   }
 

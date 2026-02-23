@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import type { Box, APIError } from '@/lib/types'
 
 export default function BoxesPage() {
-  const [boxes, setBoxes] = useState<any[]>([])
+  const [boxes, setBoxes] = useState<Box[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [editingBox, setEditingBox] = useState<any>(null)
+  const [editingBox, setEditingBox] = useState<Box | null>(null)
   const [formData, setFormData] = useState({
     name: '',
     length: '',
@@ -26,8 +27,9 @@ export default function BoxesPage() {
     try {
       const response = await api.getBoxes()
       setBoxes(response.data || [])
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load boxes')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to load boxes')
     } finally {
       setLoading(false)
     }
@@ -57,12 +59,13 @@ export default function BoxesPage() {
       setEditingBox(null)
       resetForm()
       loadBoxes()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save box')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to save box')
     }
   }
 
-  const handleEdit = (box: any) => {
+  const handleEdit = (box: Box) => {
     setEditingBox(box)
     setFormData({
       name: box.name,
@@ -70,7 +73,7 @@ export default function BoxesPage() {
       width: box.width.toString(),
       height: box.height.toString(),
       cost: box.cost.toString(),
-      maxWeight: box.maxWeight.toString(),
+      maxWeight: box.maxWeight?.toString() || '',
     })
     setShowModal(true)
   }
@@ -81,8 +84,9 @@ export default function BoxesPage() {
     try {
       await api.deleteBox(id)
       loadBoxes()
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to delete box')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to delete box')
     }
   }
 

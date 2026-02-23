@@ -4,11 +4,12 @@ import { useEffect, useState } from 'react'
 import { api } from '@/lib/api'
 import CostTrendChart from '@/components/charts/CostTrendChart'
 import BoxUsageChart from '@/components/charts/BoxUsageChart'
+import type { DashboardKPIs, CostTrendData, BoxUsageData, APIError } from '@/lib/types'
 
 export default function DashboardPage() {
-  const [kpis, setKpis] = useState<any>(null)
-  const [costTrend, setCostTrend] = useState<any[]>([])
-  const [boxUsage, setBoxUsage] = useState<any[]>([])
+  const [kpis, setKpis] = useState<DashboardKPIs | null>(null)
+  const [costTrend, setCostTrend] = useState<CostTrendData[]>([])
+  const [boxUsage, setBoxUsage] = useState<BoxUsageData[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [dateRange, setDateRange] = useState({ start: '', end: '' })
@@ -27,8 +28,9 @@ export default function DashboardPage() {
       setKpis(kpiResponse.data)
       setCostTrend(trendResponse.data || [])
       setBoxUsage(usageResponse.data || [])
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to load dashboard data')
+    } catch (err) {
+      const error = err as APIError
+      setError(error.response?.data?.message || 'Failed to load dashboard data')
     } finally {
       setLoading(false)
     }
