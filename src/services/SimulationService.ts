@@ -170,7 +170,7 @@ export class SimulationService {
   private calculateComparison(
     optimizedResults: PackingResult[],
     baselineResults: BaselineResult[],
-    totalOrders: number
+    _totalOrders: number
   ): ComparisonMetrics {
     const optimizedTotalCost = optimizedResults.reduce(
       (sum, r) => sum + r.shippingCost,
@@ -247,7 +247,7 @@ export class SimulationService {
    */
   private calculateSavings(
     comparison: ComparisonMetrics,
-    totalOrders: number
+    _totalOrders: number
   ): SavingsAnalysis {
     const perOrderSavings =
       totalOrders > 0 ? comparison.totalSavings / totalOrders : 0
