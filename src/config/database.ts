@@ -4,11 +4,10 @@ import { logger } from '../utils/logger'
 // Validate DATABASE_URL is present
 if (!process.env.DATABASE_URL) {
   logger.error('DATABASE_URL environment variable is not set')
-  process.exit(1)
+  throw new Error('DATABASE_URL is required')
 }
 
 // Configure Prisma with connection pooling and query timeouts
-// Requirements: 22.8 (connection pooling), 22.10 (query timeouts)
 const prisma = new PrismaClient({
   log: [
     { level: 'query', emit: 'event' },
@@ -34,7 +33,7 @@ prisma.$on('query', (e) => {
 })
 
 // Test database connection with retry logic for Railway
-const connectWithRetry = async (retries = 5): Promise<void> => {
+const connectWithRetry = async (retries = 10): Promise<void> => {
   for (let i = 0; i < retries; i++) {
     try {
       await prisma.$connect()
@@ -44,16 +43,18 @@ const connectWithRetry = async (retries = 5): Promise<void> => {
       logger.warn(`Database connection attempt ${i + 1}/${retries} failed:`, error)
       if (i === retries - 1) {
         logger.error('Database connection failed after all retries:', error)
-        process.exit(1)
+        throw error
       }
       // Wait before retrying (exponential backoff)
-      await new Promise(resolve => setTimeout(resolve, Math.pow(2, i) * 1000))
+      await new Promise(resolve => setTimeout(resolve, Math.min(Math.pow(2, i) * 1000, 10000)))
     }
   }
 }
 
-// Initialize connection
-connectWithRetry()
+// Initialize connection asynchronously (don't block startup)
+connectWithRetry().catch((error) => {
+  logger.error('Failed to connect to database:', error)
+})
 
 // Graceful shutdown
 process.on('beforeExit', async () => {

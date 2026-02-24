@@ -81,8 +81,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 // Health check endpoint
 app.get('/health', async (req, res) => {
   // Simple health check for load balancers (query param: simple=true)
+  // This endpoint responds immediately without checking dependencies
   if (req.query.simple === 'true') {
-    return res.json({ status: 'ok', timestamp: new Date().toISOString() })
+    return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
   }
   
   // Comprehensive health check
