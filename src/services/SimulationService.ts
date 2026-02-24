@@ -1,4 +1,4 @@
-﻿import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import {
   SimulationJob,
   SimulationResult,
@@ -117,7 +117,6 @@ export class SimulationService {
 
       // Use transaction to create simulation and update job atomically
       const result = await prisma.$transaction(async (tx: any) => {
-      const result = await prisma.$transaction(async (tx: any) => {
         const simulation = await tx.simulation.create({
           data: {
             jobId,
@@ -170,7 +169,8 @@ export class SimulationService {
    */
   private calculateComparison(
     optimizedResults: PackingResult[],
-    baselineResults: BaselineResult[]
+    baselineResults: BaselineResult[],
+    totalOrders: number
   ): ComparisonMetrics {
     const optimizedTotalCost = optimizedResults.reduce(
       (sum, r) => sum + r.shippingCost,
