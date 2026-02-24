@@ -2,6 +2,16 @@
 
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import { useToast } from '@/components/ui/Toast'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Alert } from '@/components/ui/Alert'
+import { Modal, ModalFooter } from '@/components/ui/Modal'
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table'
+import { Badge } from '@/components/ui/Badge'
+import { LoadingScreen } from '@/components/ui/Spinner'
+import { Plus, Edit, Trash2 } from 'lucide-react'
 import type { Box, APIError } from '@/lib/types'
 
 export default function BoxesPage() {
@@ -10,6 +20,8 @@ export default function BoxesPage() {
   const [error, setError] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [editingBox, setEditingBox] = useState<Box | null>(null)
+  const [saving, setSaving] = useState(false)
+  const { addToast } = useToast()
   const [formData, setFormData] = useState({
     name: '',
     length: '',
@@ -37,6 +49,7 @@ export default function BoxesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setSaving(true)
     setError('')
 
     try {
@@ -51,8 +64,10 @@ export default function BoxesPage() {
 
       if (editingBox) {
         await api.updateBox(editingBox.id, data)
+        addToast('Box updated successfully', 'success')
       } else {
         await api.createBox(data)
+        addToast('Box created successfully', 'success')
       }
 
       setShowModal(false)
@@ -61,7 +76,11 @@ export default function BoxesPage() {
       loadBoxes()
     } catch (err) {
       const error = err as APIError
-      setError(error.response?.data?.message || 'Failed to save box')
+      const errorMessage = error.response?.data?.message || 'Failed to save box'
+      setError(errorMessage)
+      addToast(errorMessage, 'error')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -83,10 +102,12 @@ export default function BoxesPage() {
 
     try {
       await api.deleteBox(id)
+      addToast('Box deleted successfully', 'success')
       loadBoxes()
     } catch (err) {
       const error = err as APIError
-      setError(error.response?.data?.message || 'Failed to delete box')
+      const errorMessage = error.response?.data?.message || 'Failed to delete box'
+      addToast(errorMessage, 'error')
     }
   }
 
@@ -107,222 +128,149 @@ export default function BoxesPage() {
     setShowModal(true)
   }
 
-  if (loading) {
-    return (
-      <div className="p-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-          <div className="h-64 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    )
-  }
+  if (loading) return <LoadingScreen message="Loading boxes..." />
 
   return (
     <div className="p-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Box Catalog</h1>
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-        >
+        <Button onClick={openAddModal}>
+          <Plus className="mr-2 h-4 w-4" />
           Add Box
-        </button>
+        </Button>
       </div>
 
-      {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-          <p className="text-red-800">{error}</p>
-        </div>
-      )}
+      {error && <Alert variant="error" className="mb-6">{error}</Alert>}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Dimensions (L×W×H)
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Volume
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Cost
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Max Weight
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {boxes.map((box) => (
-              <tr key={box.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {box.name}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {box.length} × {box.width} × {box.height}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {(box.length * box.width * box.height).toFixed(0)} in³
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  ${box.cost.toFixed(2)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {box.maxWeight} lbs
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span
-                    className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      box.isActive
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {box.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button
-                    onClick={() => handleEdit(box)}
-                    className="text-blue-600 hover:text-blue-900 mr-4"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDelete(box.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Dimensions (L×W×H)</TableHead>
+                <TableHead>Volume</TableHead>
+                <TableHead>Cost</TableHead>
+                <TableHead>Max Weight</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {boxes.map((box) => (
+                <TableRow key={box.id}>
+                  <TableCell className="font-medium">{box.name}</TableCell>
+                  <TableCell>{box.length} × {box.width} × {box.height}</TableCell>
+                  <TableCell>{(box.length * box.width * box.height).toFixed(0)} in³</TableCell>
+                  <TableCell>${box.cost.toFixed(2)}</TableCell>
+                  <TableCell>{box.maxWeight} lbs</TableCell>
+                  <TableCell>
+                    <Badge variant={box.isActive ? 'success' : 'secondary'}>
+                      {box.isActive ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      onClick={() => handleEdit(box)}
+                      variant="ghost"
+                      size="sm"
+                      className="mr-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      onClick={() => handleDelete(box.id)}
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-600" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-8 max-w-md w-full">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
-              {editingBox ? 'Edit Box' : 'Add Box'}
-            </h2>
-            <form onSubmit={handleSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Length
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.length}
-                      onChange={(e) => setFormData({ ...formData, length: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Width
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.width}
-                      onChange={(e) => setFormData({ ...formData, width: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Height
-                    </label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={formData.height}
-                      onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Cost ($)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.cost}
-                    onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Max Weight (lbs)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={formData.maxWeight}
-                    onChange={(e) => setFormData({ ...formData, maxWeight: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                    required
-                  />
-                </div>
-              </div>
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowModal(false)
-                    setEditingBox(null)
-                    resetForm()
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  {editingBox ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </form>
+      <Modal
+        isOpen={showModal}
+        onClose={() => {
+          setShowModal(false)
+          setEditingBox(null)
+          resetForm()
+        }}
+        title={editingBox ? 'Edit Box' : 'Add Box'}
+      >
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <Input
+              label="Name"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              required
+            />
+            <div className="grid grid-cols-3 gap-4">
+              <Input
+                label="Length"
+                type="number"
+                step="0.01"
+                value={formData.length}
+                onChange={(e) => setFormData({ ...formData, length: e.target.value })}
+                required
+              />
+              <Input
+                label="Width"
+                type="number"
+                step="0.01"
+                value={formData.width}
+                onChange={(e) => setFormData({ ...formData, width: e.target.value })}
+                required
+              />
+              <Input
+                label="Height"
+                type="number"
+                step="0.01"
+                value={formData.height}
+                onChange={(e) => setFormData({ ...formData, height: e.target.value })}
+                required
+              />
+            </div>
+            <Input
+              label="Cost ($)"
+              type="number"
+              step="0.01"
+              value={formData.cost}
+              onChange={(e) => setFormData({ ...formData, cost: e.target.value })}
+              required
+            />
+            <Input
+              label="Max Weight (lbs)"
+              type="number"
+              step="0.01"
+              value={formData.maxWeight}
+              onChange={(e) => setFormData({ ...formData, maxWeight: e.target.value })}
+              required
+            />
           </div>
-        </div>
-      )}
+          <ModalFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setShowModal(false)
+                setEditingBox(null)
+                resetForm()
+              }}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" isLoading={saving}>
+              {editingBox ? 'Update' : 'Create'}
+            </Button>
+          </ModalFooter>
+        </form>
+      </Modal>
     </div>
   )
 }
