@@ -12,6 +12,7 @@ import {
 import { CSVParsingService } from './CSVParsingService'
 import { PackingEngine } from './PackingEngine'
 import { BaselineSimulator } from './BaselineSimulator'
+import { BoxCatalogManager } from './BoxCatalogManager'
 
 const prisma = new PrismaClient()
 
@@ -19,11 +20,13 @@ export class SimulationService {
   private csvParser: CSVParsingService
   private packingEngine: PackingEngine
   private baselineSimulator: BaselineSimulator
+  private boxCatalogManager: BoxCatalogManager
 
   constructor() {
     this.csvParser = new CSVParsingService()
-    this.packingEngine = new PackingEngine()
-    this.baselineSimulator = new BaselineSimulator()
+    this.boxCatalogManager = new BoxCatalogManager()
+    this.packingEngine = new PackingEngine(this.boxCatalogManager)
+    this.baselineSimulator = new BaselineSimulator(this.boxCatalogManager, this.packingEngine)
   }
 
   /**
@@ -59,7 +62,7 @@ export class SimulationService {
     // Update status to PROCESSING
     await prisma.simulationJob.update({
       where: { id: jobId },
-      data: { status: JobStatus.PROCESSING },
+      data: { status: JobStatus.PROCESSING as any },
     })
 
     try {
@@ -83,7 +86,7 @@ export class SimulationService {
             optimizedResults.push(optimizedResult)
 
             // Simulate baseline
-            const baselineResult = await this.baselineSimulator.simulateBaseline(
+            const baselineResult = await this.baselineSimulator.simulateBaselinePacking(
               order,
               optimizedResult,
               config
@@ -110,7 +113,7 @@ export class SimulationService {
 
       // Generate recommendations and anomaly warnings
       const recommendations = this.generateRecommendations(comparison, savings)
-      const anomalyWarnings = this.generateAnomalyWarnings(savings)
+      const anomalyWarnings = this.generateAnomalyWarnings(comparison)
 
       // Use transaction to create simulation and update job atomically
       const result = await prisma.$transaction(async (tx: any) => {
@@ -132,7 +135,7 @@ export class SimulationService {
         await tx.simulationJob.update({
           where: { id: jobId },
           data: {
-            status: JobStatus.COMPLETED,
+            status: JobStatus.COMPLETED as any,
             processedOrders: optimizedResults.length,
             completedAt: new Date(),
           },
@@ -155,7 +158,7 @@ export class SimulationService {
       // Update job status to FAILED
       await prisma.simulationJob.update({
         where: { id: jobId },
-        data: { status: JobStatus.FAILED },
+        data: { status: JobStatus.FAILED as any },
       })
 
       throw error
@@ -167,8 +170,7 @@ export class SimulationService {
    */
   private calculateComparison(
     optimizedResults: PackingResult[],
-    baselineResults: BaselineResult[],
-    totalOrders: number
+    baselineResults: BaselineResult[]
   ): ComparisonMetrics {
     const optimizedTotalCost = optimizedResults.reduce(
       (sum, r) => sum + r.shippingCost,
@@ -322,16 +324,17 @@ export class SimulationService {
   /**
    * Generate anomaly warnings
    */
-  private generateAnomalyWarnings(savings: SavingsAnalysis): string[] {
+  private generateAnomalyWarnings(comparison: ComparisonMetrics): string[] {
     const warnings: string[] = []
 
-    if (savings.savingsPercentage > 25) {
+    if (comparison.savingsPercentage > 25) {
       warnings.push(
         `Warning: Savings percentage (${savings.savingsPercentage.toFixed(1)}%) exceeds typical range. This may indicate data quality issues or extremely inefficient baseline packing.`
       )
     }
 
-    if (!savings.isRealistic) {
+    const isRealistic = comparison.savingsPercentage >= 5 && comparison.savingsPercentage <= 25
+    if (!isRealistic) {
       warnings.push(
         'Savings projections fall outside typical range. Please review input data quality and box catalog configuration.'
       )
