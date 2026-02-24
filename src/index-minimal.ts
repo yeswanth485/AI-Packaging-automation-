@@ -1,13 +1,25 @@
 import express from 'express'
 import dotenv from 'dotenv'
 
+// Load environment variables FIRST
 dotenv.config()
 
+console.log('=================================')
+console.log('Starting AI Packaging Optimizer...')
+console.log('Node version:', process.version)
+console.log('Environment:', process.env.NODE_ENV)
+console.log('PORT from env:', process.env.PORT)
+console.log('=================================')
+
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = parseInt(process.env.PORT || '3000', 10)
+
+console.log('Express app created')
+console.log('Using PORT:', PORT)
 
 // Minimal middleware
 app.use(express.json())
+console.log('Middleware configured')
 
 // Ultra-simple health check
 app.get('/health', (_req, res) => {
@@ -19,14 +31,18 @@ app.get('/health', (_req, res) => {
     env: process.env.NODE_ENV
   })
 })
+console.log('Health check route registered')
 
 // Root endpoint
 app.get('/', (_req, res) => {
   res.json({ message: 'AI Packaging Optimizer API', status: 'running' })
 })
+console.log('Root route registered')
+
+console.log('About to start listening on port', PORT)
 
 // Start server
-const server = app.listen(PORT, () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`=================================`)
   console.log(`Server started successfully!`)
   console.log(`Port: ${PORT}`)
