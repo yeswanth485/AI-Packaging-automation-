@@ -329,7 +329,7 @@ export class SimulationService {
 
     if (comparison.savingsPercentage > 25) {
       warnings.push(
-        `Warning: Savings percentage (${savings.savingsPercentage.toFixed(1)}%) exceeds typical range. This may indicate data quality issues or extremely inefficient baseline packing.`
+        `Warning: Savings percentage (${comparison.savingsPercentage.toFixed(1)}%) exceeds typical range. This may indicate data quality issues or extremely inefficient baseline packing.`
       )
     }
 
