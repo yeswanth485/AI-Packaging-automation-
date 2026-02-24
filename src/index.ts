@@ -141,14 +141,29 @@ app.use('/api/config', async (req, res, next) => {
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {
   const path = require('path')
+  const fs = require('fs')
   
-  app.use(express.static(path.join(__dirname, '../frontend/.next/standalone')))
-  app.use(express.static(path.join(__dirname, '../frontend/public')))
-  app.use('/_next/static', express.static(path.join(__dirname, '../frontend/.next/static')))
+  const frontendStaticPath = path.join(__dirname, '../frontend/out')
   
-  app.get('*', (_req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/.next/standalone/index.html'))
-  })
+  if (fs.existsSync(frontendStaticPath)) {
+    logger.info('Serving frontend static files from:', frontendStaticPath)
+    
+    // Serve static files
+    app.use(express.static(frontendStaticPath))
+    
+    // For all non-API routes, serve index.html (SPA fallback)
+    app.get('*', (req, res, next) => {
+      // Skip API routes, health, and metrics
+      if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/metrics') {
+        return next()
+      }
+      
+      res.sendFile(path.join(frontendStaticPath, 'index.html'))
+    })
+  } else {
+    logger.warn('Frontend build not found at:', frontendStaticPath)
+    logger.info('Serving API only')
+  }
 }
 
 // Error handling middleware

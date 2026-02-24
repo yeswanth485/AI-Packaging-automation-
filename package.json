@@ -7,9 +7,10 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
+    "build:all": "npm run build && cd frontend && npm install && npm run build && cd ..",
     "start": "node dist/index.js",
     "start:prod": "npx prisma migrate deploy && node dist/index.js",
-    "railway:build": "npm install && npx prisma generate && npm run build",
+    "railway:build": "npm install && npx prisma generate && npm run build && cd frontend && npm install && npm run build && cd ..",
     "railway:start": "npx prisma migrate deploy && node dist/index.js",
     "test": "jest",
     "test:watch": "jest --watch",
