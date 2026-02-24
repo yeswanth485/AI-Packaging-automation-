@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 3000
 app.use(express.json())
 
 // Ultra-simple health check
-app.get('/health', (req, res) => {
+app.get('/health', (_req, res) => {
   console.log('Health check requested')
   res.status(200).json({ 
     status: 'ok', 
@@ -21,7 +21,7 @@ app.get('/health', (req, res) => {
 })
 
 // Root endpoint
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.json({ message: 'AI Packaging Optimizer API', status: 'running' })
 })
 
