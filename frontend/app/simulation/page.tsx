@@ -91,7 +91,7 @@ export default function SimulationPage() {
         </Alert>
       )}
 
-      {result && (
+      {result && result.results && (
         <Card className="mb-8">
           <CardHeader>
             <div className="flex justify-between items-center">
@@ -107,29 +107,29 @@ export default function SimulationPage() {
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500">Total Orders</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {result.summary?.totalOrders || 0}
+                  {result.results.summary?.totalOrders || 0}
                 </p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500">Total Savings</p>
                 <p className="text-2xl font-bold text-green-600">
-                  ${result.summary?.totalSavings?.toFixed(2) || '0.00'}
+                  ${result.results.summary?.totalSavings?.toFixed(2) || '0.00'}
                 </p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500">Savings %</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {result.summary?.savingsPercentage?.toFixed(1) || '0.0'}%
+                  {result.results.summary?.savingsPercentage?.toFixed(1) || '0.0'}%
                 </p>
               </div>
               <div className="bg-gray-50 rounded-lg p-4">
                 <p className="text-sm text-gray-500">Avg Utilization</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {result.summary?.averageUtilization?.toFixed(1) || '0.0'}%
+                  {result.results.summary?.averageUtilization?.toFixed(1) || '0.0'}%
                 </p>
               </div>
             </div>
-            <ResultsTable results={result.orders || []} />
+            <ResultsTable results={result.results.orders || []} />
           </CardContent>
         </Card>
       )}
