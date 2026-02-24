@@ -37,7 +37,6 @@ RUN npx prisma generate
 
 COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nodejs:nodejs /app/frontend/.next ./frontend/.next
-COPY --from=builder --chown=nodejs:nodejs /app/frontend/public ./frontend/public
 
 COPY --chown=nodejs:nodejs frontend/next.config.js ./frontend/
 COPY --chown=nodejs:nodejs frontend/package.json ./frontend/
