@@ -3,20 +3,10 @@ import helmet from 'helmet'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import { logger } from './utils/logger'
-import { performHealthCheck } from './utils/healthCheck'
 import { errorHandler, requestIdMiddleware } from './middleware/errorHandler'
 import { auditLogMiddleware } from './middleware/auditLog'
 import { metricsMiddleware } from './middleware/metrics'
 import { register } from './utils/metrics'
-import { prisma } from './config/database'
-import { redis } from './config/redis'
-import authRoutes from './routes/auth.routes'
-import boxRoutes from './routes/box.routes'
-import simulationRoutes from './routes/simulation.routes'
-import optimizeRoutes from './routes/optimize.routes'
-import subscriptionRoutes from './routes/subscription.routes'
-import analyticsRoutes from './routes/analytics.routes'
-import configRoutes from './routes/config.routes'
 
 // Load environment variables
 dotenv.config()
@@ -47,7 +37,7 @@ app.use(
       },
     },
     hsts: {
-      maxAge: 31536000, // 1 year
+      maxAge: 31536000,
       includeSubDomains: true,
       preload: true,
     },
@@ -78,16 +68,15 @@ app.use(auditLogMiddleware)
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Health check endpoint
+// Simple health check endpoint - responds immediately without dependencies
 app.get('/health', async (req, res) => {
-  // Simple health check for load balancers (query param: simple=true)
-  // This endpoint responds immediately without checking dependencies
   if (req.query.simple === 'true') {
     return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
   }
   
-  // Comprehensive health check
+  // Comprehensive health check - lazy load dependencies
   try {
+    const { performHealthCheck } = await import('./utils/healthCheck')
     const healthCheck = await performHealthCheck()
     const statusCode = healthCheck.status === 'healthy' ? 200 : 
                        healthCheck.status === 'degraded' ? 200 : 503
@@ -113,32 +102,54 @@ app.get('/metrics', async (_req, res) => {
   }
 })
 
-// API routes
-app.use('/api/auth', authRoutes)
-app.use('/api/boxes', boxRoutes)
-app.use('/api/simulation', simulationRoutes)
-app.use('/api/optimize', optimizeRoutes)
-app.use('/api/subscriptions', subscriptionRoutes)
-app.use('/api/analytics', analyticsRoutes)
-app.use('/api/config', configRoutes)
+// Lazy load routes to avoid loading database/redis on startup
+app.use('/api/auth', async (req, res, next) => {
+  const authRoutes = await import('./routes/auth.routes')
+  return authRoutes.default(req, res, next)
+})
 
+app.use('/api/boxes', async (req, res, next) => {
+  const boxRoutes = await import('./routes/box.routes')
+  return boxRoutes.default(req, res, next)
+})
+
+app.use('/api/simulation', async (req, res, next) => {
+  const simulationRoutes = await import('./routes/simulation.routes')
+  return simulationRoutes.default(req, res, next)
+})
+
+app.use('/api/optimize', async (req, res, next) => {
+  const optimizeRoutes = await import('./routes/optimize.routes')
+  return optimizeRoutes.default(req, res, next)
+})
+
+app.use('/api/subscriptions', async (req, res, next) => {
+  const subscriptionRoutes = await import('./routes/subscription.routes')
+  return subscriptionRoutes.default(req, res, next)
+})
+
+app.use('/api/analytics', async (req, res, next) => {
+  const analyticsRoutes = await import('./routes/analytics.routes')
+  return analyticsRoutes.default(req, res, next)
+})
+
+app.use('/api/config', async (req, res, next) => {
+  const configRoutes = await import('./routes/config.routes')
+  return configRoutes.default(req, res, next)
+})
 
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {
   const path = require('path')
   
-  // Serve Next.js static files
   app.use(express.static(path.join(__dirname, '../frontend/.next/standalone')))
   app.use(express.static(path.join(__dirname, '../frontend/public')))
   app.use('/_next/static', express.static(path.join(__dirname, '../frontend/.next/static')))
   
-  // Handle all other routes - serve Next.js app
   app.get('*', (_req, res) => {
-
     res.sendFile(path.join(__dirname, '../frontend/.next/standalone/index.html'))
   })
 }
-
 
 // Error handling middleware
 app.use(errorHandler)
@@ -147,8 +158,19 @@ app.use(errorHandler)
 const gracefulShutdown = async (): Promise<void> => {
   logger.info('Shutting down gracefully...')
   
-  await prisma.$disconnect()
-  redis.disconnect()
+  try {
+    const { prisma } = await import('./config/database')
+    await prisma.$disconnect()
+  } catch (error) {
+    logger.warn('Could not disconnect from database:', error)
+  }
+  
+  try {
+    const { redis } = await import('./config/redis')
+    redis.disconnect()
+  } catch (error) {
+    logger.warn('Could not disconnect from Redis:', error)
+  }
   
   process.exit(0)
 }
@@ -160,6 +182,19 @@ process.on('SIGINT', gracefulShutdown)
 const server = app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`)
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
+  logger.info('Health check available at /health?simple=true')
 })
+
+// Initialize database connection in background (don't block startup)
+setTimeout(async () => {
+  try {
+    logger.info('Initializing database connection...')
+    const { prisma } = await import('./config/database')
+    await prisma.$connect()
+    logger.info('Database connection initialized')
+  } catch (error) {
+    logger.error('Failed to initialize database connection:', error)
+  }
+}, 1000)
 
 export { app, server }
