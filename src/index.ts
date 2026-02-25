@@ -23,7 +23,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const app = express()
-const PORT = process.env.PORT || 3000
+const PORT = parseInt(process.env.PORT || '3000', 10)
 
 // Security middleware
 app.use(
@@ -193,11 +193,12 @@ const gracefulShutdown = async (): Promise<void> => {
 process.on('SIGTERM', gracefulShutdown)
 process.on('SIGINT', gracefulShutdown)
 
-// Start server
-const server = app.listen(PORT, () => {
+// Start server - bind to 0.0.0.0 for Railway
+const server = app.listen(PORT, '0.0.0.0', () => {
   logger.info(`Server running on port ${PORT}`)
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
   logger.info('Health check available at /health?simple=true')
+  logger.info('Server bound to 0.0.0.0 (accessible externally)')
 })
 
 // Initialize database connection in background (don't block startup)
