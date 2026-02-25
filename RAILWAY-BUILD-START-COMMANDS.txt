@@ -1,0 +1,135 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║              RAILWAY BUILD AND START COMMANDS                            ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+IMPORTANT: Railway will use your Dockerfile automatically.
+You DON'T need to set build/start commands manually!
+
+However, if Railway asks for them, here they are:
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  BUILD COMMAND (if asked)                                                │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Leave EMPTY or use:                                                     │
+│                                                                          │
+│  npm install && npx prisma generate && npm run build && cd frontend && npm install && npm run build
+│                                                                          │
+│  BUT: Railway will use Dockerfile automatically, so this is optional!   │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  START COMMAND (if asked)                                                │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  Leave EMPTY or use:                                                     │
+│                                                                          │
+│  node dist/index.js                                                      │
+│                                                                          │
+│  BUT: Railway will use Dockerfile CMD automatically!                     │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                    RECOMMENDED: USE DOCKERFILE                           ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+Railway will automatically detect your Dockerfile and use it.
+This is the BEST option because:
+
+✅ Dockerfile is already configured correctly
+✅ Builds both backend and frontend
+✅ Handles all dependencies
+✅ No manual commands needed
+
+Just deploy from GitHub and Railway will handle everything!
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                    WHAT RAILWAY WILL DO                                  ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+1. Detect Dockerfile in your repository
+2. Build Docker image using Dockerfile
+3. Run the container
+4. Start your application with: node dist/index.js
+5. Health check at: /health
+
+NO MANUAL COMMANDS NEEDED!
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║              IF RAILWAY ASKS FOR COMMANDS (RARE)                         ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+If Railway shows a "Build Command" or "Start Command" field:
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  Option 1: Leave Both EMPTY (Recommended)                                │
+├──────────────────────────────────────────────────────────────────────────┤
+│  Build Command: [leave empty]                                            │
+│  Start Command: [leave empty]                                            │
+│                                                                          │
+│  Railway will use Dockerfile automatically                               │
+└──────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────────────┐
+│  Option 2: Use These Commands (If Required)                              │
+├──────────────────────────────────────────────────────────────────────────┤
+│  Build Command:                                                          │
+│  npm install && npx prisma generate && npm run build && cd frontend && npm install && npm run build
+│                                                                          │
+│  Start Command:                                                          │
+│  node dist/index.js                                                      │
+└──────────────────────────────────────────────────────────────────────────┘
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                    COPY-PASTE READY COMMANDS                             ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+BUILD COMMAND (copy this):
+npm install && npx prisma generate && npm run build && cd frontend && npm install && npm run build
+
+START COMMAND (copy this):
+node dist/index.js
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                    WHAT EACH COMMAND DOES                                ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+BUILD COMMAND BREAKDOWN:
+------------------------
+npm install                    → Install backend dependencies
+npx prisma generate            → Generate Prisma client
+npm run build                  → Build backend (TypeScript → JavaScript)
+cd frontend                    → Go to frontend directory
+npm install                    → Install frontend dependencies
+npm run build                  → Build frontend (Next.js → Static files)
+
+START COMMAND BREAKDOWN:
+------------------------
+node dist/index.js             → Start the Node.js server
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║                    SUMMARY                                               ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+✅ BEST: Let Railway use Dockerfile (no commands needed)
+⚪ ALTERNATIVE: Use the commands above if Railway asks
+
+Your Dockerfile already handles everything correctly!
+
+Date: February 25, 2026
