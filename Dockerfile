@@ -1,0 +1,23 @@
+﻿FROM node:20-alpine
+WORKDIR /app
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+# Install dependencies
+RUN npm ci
+# Generate Prisma Client
+RUN npx prisma generate
+# Copy source code
+COPY . .
+# Build backend
+RUN npm run build
+# Build frontend
+WORKDIR /app/frontend
+RUN npm ci
+RUN npm run build
+# Back to app root
+WORKDIR /app
+# Expose port
+EXPOSE 3000
+# Start the application
+CMD ["node", "dist/index.js"]
