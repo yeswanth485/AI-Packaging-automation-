@@ -1,190 +1,180 @@
 import express from 'express'
-import helmet from 'helmet'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { logger } from './utils/logger'
-import { errorHandler, requestIdMiddleware } from './middleware/errorHandler'
-import { auditLogMiddleware } from './middleware/auditLog'
-import { metricsMiddleware } from './middleware/metrics'
-import { register } from './utils/metrics'
+import path from 'path'
+import fs from 'fs'
 
 // Load environment variables
 dotenv.config()
 
-// Validate critical environment variables for production
-if (process.env.NODE_ENV === 'production') {
-  const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'SESSION_SECRET']
-  const missingVars = requiredEnvVars.filter(varName => !process.env[varName])
-  
-  if (missingVars.length > 0) {
-    logger.error(`Missing required environment variables: ${missingVars.join(', ')}`)
-    process.exit(1)
-  }
-}
-
 const app = express()
 const PORT = parseInt(process.env.PORT || '3000', 10)
 
-// Security middleware
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        imgSrc: ["'self'", 'data:', 'https:'],
-      },
-    },
-    hsts: {
-      maxAge: 31536000,
-      includeSubDomains: true,
-      preload: true,
-    },
-    frameguard: {
-      action: 'deny',
-    },
-    noSniff: true,
-    xssFilter: true,
-  })
-)
-app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-CSRF-Token', 'X-Request-ID'],
-}))
+console.log('=== SERVER STARTING ===')
+console.log('PORT:', PORT)
+console.log('NODE_ENV:', process.env.NODE_ENV)
+console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET')
+console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET')
 
-// Request ID middleware
-app.use(requestIdMiddleware)
-
-// Metrics middleware
-app.use(metricsMiddleware)
-
-// Audit logging middleware
-app.use(auditLogMiddleware)
-
-// Body parsing middleware with size limits
+// Basic middleware - no dependencies
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// Simple health check endpoint - responds immediately without dependencies
-app.get('/health', async (req, res) => {
-  if (req.query.simple === 'true') {
-    return res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() })
-  }
-  
-  // Comprehensive health check - lazy load dependencies
-  try {
-    const { performHealthCheck } = await import('./utils/healthCheck')
-    const healthCheck = await performHealthCheck()
-    const statusCode = healthCheck.status === 'healthy' ? 200 : 
-                       healthCheck.status === 'degraded' ? 200 : 503
-    return res.status(statusCode).json(healthCheck)
-  } catch (error) {
-    logger.error('Health check failed', { error })
-    return res.status(503).json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      error: 'Health check failed',
-    })
-  }
+// CORS - allow all for now
+app.use(cors({
+  origin: '*',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-CSRF-Token', 'X-Request-ID'],
+}))
+
+// Simple health check - NO DEPENDENCIES
+app.get('/health', (_req, res) => {
+  console.log('Health check requested')
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    port: PORT,
+    env: process.env.NODE_ENV || 'development'
+  })
 })
 
-// Metrics endpoint for Prometheus
-app.get('/metrics', async (_req, res) => {
-  try {
-    res.set('Content-Type', register.contentType)
-    const metrics = await register.metrics()
-    res.end(metrics)
-  } catch (error) {
-    res.status(500).end()
-  }
-})
-
-// Lazy load routes to avoid loading database/redis on startup
-app.use('/api/auth', async (req, res, next) => {
-  const authRoutes = await import('./routes/auth.routes')
-  return authRoutes.default(req, res, next)
-})
-
-app.use('/api/boxes', async (req, res, next) => {
-  const boxRoutes = await import('./routes/box.routes')
-  return boxRoutes.default(req, res, next)
-})
-
-app.use('/api/simulation', async (req, res, next) => {
-  const simulationRoutes = await import('./routes/simulation.routes')
-  return simulationRoutes.default(req, res, next)
-})
-
-app.use('/api/optimize', async (req, res, next) => {
-  const optimizeRoutes = await import('./routes/optimize.routes')
-  return optimizeRoutes.default(req, res, next)
-})
-
-app.use('/api/subscriptions', async (req, res, next) => {
-  const subscriptionRoutes = await import('./routes/subscription.routes')
-  return subscriptionRoutes.default(req, res, next)
-})
-
-app.use('/api/analytics', async (req, res, next) => {
-  const analyticsRoutes = await import('./routes/analytics.routes')
-  return analyticsRoutes.default(req, res, next)
-})
-
-app.use('/api/config', async (req, res, next) => {
-  const configRoutes = await import('./routes/config.routes')
-  return configRoutes.default(req, res, next)
+// Root endpoint
+app.get('/', (_req, res) => {
+  res.status(200).json({ 
+    message: 'AI Packaging Optimizer API',
+    status: 'running',
+    timestamp: new Date().toISOString()
+  })
 })
 
 // Serve frontend static files in production
 if (process.env.NODE_ENV === 'production') {
-  const path = require('path')
-  const fs = require('fs')
-  
   const frontendStaticPath = path.join(__dirname, '../frontend/out')
   
   if (fs.existsSync(frontendStaticPath)) {
-    logger.info('Serving frontend static files from:', frontendStaticPath)
+    console.log('Frontend static files found at:', frontendStaticPath)
     
     // Serve static files
     app.use(express.static(frontendStaticPath))
     
-    // For all non-API routes, serve index.html (SPA fallback)
+    // SPA fallback for all non-API routes
     app.get('*', (req, res, next) => {
       // Skip API routes, health, and metrics
       if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/metrics') {
         return next()
       }
       
-      res.sendFile(path.join(frontendStaticPath, 'index.html'))
+      const indexPath = path.join(frontendStaticPath, 'index.html')
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath)
+      } else {
+        res.status(404).json({ error: 'Frontend not found' })
+      }
     })
   } else {
-    logger.warn('Frontend build not found at:', frontendStaticPath)
-    logger.info('Serving API only')
+    console.log('Frontend build not found at:', frontendStaticPath)
   }
 }
 
-// Error handling middleware
-app.use(errorHandler)
+// Load API routes AFTER health check is set up
+async function loadAPIRoutes() {
+  try {
+    console.log('Loading API routes...')
+    
+    // Lazy load logger
+    const { logger } = await import('./utils/logger')
+    
+    // Load middleware
+    const { errorHandler, requestIdMiddleware } = await import('./middleware/errorHandler')
+    const { metricsMiddleware } = await import('./middleware/metrics')
+    const { register } = await import('./utils/metrics')
+    
+    // Add middleware
+    app.use(requestIdMiddleware)
+    app.use(metricsMiddleware)
+    
+    // Metrics endpoint
+    app.get('/metrics', async (_req, res) => {
+      try {
+        res.set('Content-Type', register.contentType)
+        const metrics = await register.metrics()
+        res.end(metrics)
+      } catch (error) {
+        res.status(500).end()
+      }
+    })
+    
+    // Load routes
+    const authRoutes = await import('./routes/auth.routes')
+    const boxRoutes = await import('./routes/box.routes')
+    const simulationRoutes = await import('./routes/simulation.routes')
+    const optimizeRoutes = await import('./routes/optimize.routes')
+    const subscriptionRoutes = await import('./routes/subscription.routes')
+    const analyticsRoutes = await import('./routes/analytics.routes')
+    const configRoutes = await import('./routes/config.routes')
+    
+    app.use('/api/auth', authRoutes.default)
+    app.use('/api/boxes', boxRoutes.default)
+    app.use('/api/simulation', simulationRoutes.default)
+    app.use('/api/optimize', optimizeRoutes.default)
+    app.use('/api/subscriptions', subscriptionRoutes.default)
+    app.use('/api/analytics', analyticsRoutes.default)
+    app.use('/api/config', configRoutes.default)
+    
+    // Error handler
+    app.use(errorHandler)
+    
+    logger.info('API routes loaded successfully')
+    
+    // Initialize database connection in background
+    setTimeout(async () => {
+      try {
+        logger.info('Initializing database connection...')
+        const { prisma } = await import('./config/database')
+        await prisma.$connect()
+        logger.info('Database connection initialized')
+      } catch (error) {
+        logger.error('Failed to initialize database connection:', error)
+      }
+    }, 2000)
+    
+  } catch (error) {
+    console.error('Failed to load API routes:', error)
+  }
+}
+
+// Start server FIRST, then load routes
+const server = app.listen(PORT, '0.0.0.0', () => {
+  console.log('=== SERVER STARTED ===')
+  console.log(`Server running on port ${PORT}`)
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
+  console.log('Health check available at /health')
+  console.log('Server bound to 0.0.0.0 (accessible externally)')
+  console.log('======================')
+  
+  // Load API routes AFTER server is listening
+  loadAPIRoutes().catch(err => {
+    console.error('Error loading API routes:', err)
+  })
+})
 
 // Graceful shutdown
 const gracefulShutdown = async (): Promise<void> => {
-  logger.info('Shutting down gracefully...')
+  console.log('Shutting down gracefully...')
   
   try {
     const { prisma } = await import('./config/database')
     await prisma.$disconnect()
   } catch (error) {
-    logger.warn('Could not disconnect from database:', error)
+    console.warn('Could not disconnect from database:', error)
   }
   
   try {
     const { redis } = await import('./config/redis')
     redis.disconnect()
   } catch (error) {
-    logger.warn('Could not disconnect from Redis:', error)
+    console.warn('Could not disconnect from Redis:', error)
   }
   
   process.exit(0)
@@ -192,25 +182,5 @@ const gracefulShutdown = async (): Promise<void> => {
 
 process.on('SIGTERM', gracefulShutdown)
 process.on('SIGINT', gracefulShutdown)
-
-// Start server - bind to 0.0.0.0 for Railway
-const server = app.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Server running on port ${PORT}`)
-  logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`)
-  logger.info('Health check available at /health?simple=true')
-  logger.info('Server bound to 0.0.0.0 (accessible externally)')
-})
-
-// Initialize database connection in background (don't block startup)
-setTimeout(async () => {
-  try {
-    logger.info('Initializing database connection...')
-    const { prisma } = await import('./config/database')
-    await prisma.$connect()
-    logger.info('Database connection initialized')
-  } catch (error) {
-    logger.error('Failed to initialize database connection:', error)
-  }
-}, 1000)
 
 export { app, server }
