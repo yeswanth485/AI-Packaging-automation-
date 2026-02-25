@@ -153,6 +153,26 @@ const server = app.listen(PORT, '0.0.0.0', () => {
   console.log('Server bound to 0.0.0.0 (accessible externally)')
   console.log('======================')
   
+  // Run database migrations in background (non-blocking)
+  if (process.env.NODE_ENV === 'production') {
+    setTimeout(async () => {
+      try {
+        console.log('Running database migrations...')
+        const { exec } = require('child_process')
+        exec('npx prisma migrate deploy', (error: any, stdout: any, stderr: any) => {
+          if (error) {
+            console.error('Migration error:', error)
+            return
+          }
+          console.log('Migrations completed:', stdout)
+          if (stderr) console.error('Migration stderr:', stderr)
+        })
+      } catch (error) {
+        console.error('Failed to run migrations:', error)
+      }
+    }, 1000)
+  }
+  
   // Load API routes AFTER server is listening
   loadAPIRoutes().catch(err => {
     console.error('Error loading API routes:', err)
