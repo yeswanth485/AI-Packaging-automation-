@@ -2,13 +2,11 @@
 
 import { useEffect } from 'react'
 import { useAnalytics } from '@/hooks/useAnalytics'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Alert } from '@/components/ui/Alert'
 import { LoadingScreen } from '@/components/ui/Spinner'
 import { TrendingUp, Package, DollarSign, Percent } from 'lucide-react'
-import CostTrendChart from '@/components/charts/CostTrendChart'
-import BoxUsageChart from '@/components/charts/BoxUsageChart'
 
 function DashboardContent() {
   const { kpis, costTrend, boxUsage, isLoading, error, refresh } = useAnalytics(true)
@@ -121,11 +119,13 @@ function DashboardContent() {
             <CardTitle>Cost Trend</CardTitle>
           </CardHeader>
           <CardContent>
-            {costTrend && costTrend.length > 0 ? (
-              <CostTrendChart data={costTrend} />
-            ) : (
-              <p className="text-gray-500 text-center py-8">No data available</p>
-            )}
+            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+              <div className="text-center">
+                <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Cost trend chart will be displayed here</p>
+                <p className="text-sm text-gray-400 mt-2">Chart functionality coming soon</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -134,11 +134,13 @@ function DashboardContent() {
             <CardTitle>Box Usage</CardTitle>
           </CardHeader>
           <CardContent>
-            {boxUsage && boxUsage.length > 0 ? (
-              <BoxUsageChart data={boxUsage} />
-            ) : (
-              <p className="text-gray-500 text-center py-8">No data available</p>
-            )}
+            <div className="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
+              <div className="text-center">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Box usage chart will be displayed here</p>
+                <p className="text-sm text-gray-400 mt-2">Chart functionality coming soon</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

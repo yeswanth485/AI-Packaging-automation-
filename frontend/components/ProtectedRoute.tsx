@@ -28,3 +28,6 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
 
   return <>{children}</>
 }
+
+// Also export as named export for consistency
+export { ProtectedRoute }
