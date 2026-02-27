@@ -131,7 +131,6 @@ export class AuthenticationService {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name || undefined,
         role: user.role,
         subscriptionTier: user.subscriptionTier,
         isActive: user.isActive,
@@ -193,7 +192,16 @@ export class AuthenticationService {
       return {
         accessToken,
         refreshToken, // Return the same refresh token
-        expiresIn: 15 * 60
+        expiresIn: 15 * 60,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          subscriptionTier: user.subscriptionTier,
+          isActive: user.isActive,
+          createdAt: user.createdAt,
+          lastLogin: user.lastLogin || undefined
+        }
       }
     } catch (error) {
       if (error instanceof jwt.TokenExpiredError) {

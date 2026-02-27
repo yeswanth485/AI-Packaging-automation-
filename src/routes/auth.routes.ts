@@ -233,7 +233,6 @@ router.get(
         select: {
           id: true,
           email: true,
-          name: true,
           role: true,
           subscriptionTier: true,
           isActive: true,
