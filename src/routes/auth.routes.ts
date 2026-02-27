@@ -99,9 +99,7 @@ router.post(
 
       res.status(200).json({
         status: 'success',
-        data: {
-          ...authToken,
-        },
+        data: authToken,
       })
     } catch (error) {
       if (error instanceof Error && error.message === 'Invalid credentials') {
