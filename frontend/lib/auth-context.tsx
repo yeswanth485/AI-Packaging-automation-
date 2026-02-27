@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await api.login(email, password)
-      // Set user from response
+      // Set user from response - backend returns data.user
       if (response.data?.user) {
         setUser({
           id: response.data.user.id,

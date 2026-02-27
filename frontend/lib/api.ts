@@ -26,7 +26,6 @@ class APIClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      withCredentials: true,
     })
 
     // Request interceptor to add auth token

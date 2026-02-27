@@ -20,9 +20,9 @@ console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET')
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true, limit: '10mb' }))
 
-// CORS - allow all for now
+// CORS - allow frontend origin with credentials
 app.use(cors({
-  origin: '*',
+  origin: ['http://localhost:3001', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'X-CSRF-Token', 'X-Request-ID'],

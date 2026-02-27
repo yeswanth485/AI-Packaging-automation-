@@ -206,9 +206,11 @@ export interface BoxFormData {
 
 // API Response types
 export interface AuthResponse {
+  status: string;
   data: {
     accessToken: string;
     refreshToken: string;
+    expiresIn: number;
     user: User;
   };
 }
