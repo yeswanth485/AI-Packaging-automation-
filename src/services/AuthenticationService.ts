@@ -11,6 +11,15 @@ export interface AuthToken {
   accessToken: string
   refreshToken: string
   expiresIn: number
+  user: {
+    id: string
+    email: string
+    role: string
+    subscriptionTier?: string
+    isActive: boolean
+    createdAt: Date
+    lastLogin?: Date
+  }
 }
 
 export interface APIKey {
@@ -118,7 +127,17 @@ export class AuthenticationService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: 15 * 60 // 15 minutes in seconds
+      expiresIn: 15 * 60, // 15 minutes in seconds
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name || undefined,
+        role: user.role,
+        subscriptionTier: user.subscriptionTier,
+        isActive: user.isActive,
+        createdAt: user.createdAt,
+        lastLogin: user.lastLogin || undefined
+      }
     }
   }
 

@@ -28,8 +28,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Check if user is logged in on mount
     const token = localStorage.getItem('accessToken')
     if (token) {
-      // TODO: Validate token and fetch user data
-      setLoading(false)
+      // Validate token and fetch user data
+      api.validateToken(token)
+        .then((user) => {
+          setUser({
+            id: user.id,
+            email: user.email,
+            role: user.role
+          })
+        })
+        .catch(() => {
+          // Token is invalid, clear it
+          localStorage.removeItem('accessToken')
+          localStorage.removeItem('refreshToken')
+          setUser(null)
+        })
+        .finally(() => setLoading(false))
     } else {
       setLoading(false)
     }
@@ -38,8 +52,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     try {
       const response = await api.login(email, password)
-      // TODO: Set user from response
-      setUser({ id: '1', email, role: 'CUSTOMER' })
+      // Set user from response
+      if (response.data?.user) {
+        setUser({
+          id: response.data.user.id,
+          email: response.data.user.email,
+          role: response.data.user.role
+        })
+      }
     } catch (error) {
       throw error
     }

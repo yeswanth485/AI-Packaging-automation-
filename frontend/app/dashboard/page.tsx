@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useAnalytics } from '@/hooks/useAnalytics'
+import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Alert } from '@/components/ui/Alert'
 import { LoadingScreen } from '@/components/ui/Spinner'
@@ -9,7 +10,7 @@ import { TrendingUp, Package, DollarSign, Percent } from 'lucide-react'
 import CostTrendChart from '@/components/charts/CostTrendChart'
 import BoxUsageChart from '@/components/charts/BoxUsageChart'
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { kpis, costTrend, boxUsage, isLoading, error, refresh } = useAnalytics(true)
 
   if (isLoading) {
@@ -142,5 +143,13 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function DashboardPage() {
+  return (
+    <ProtectedRoute>
+      <DashboardContent />
+    </ProtectedRoute>
   )
 }

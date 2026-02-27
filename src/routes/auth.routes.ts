@@ -213,4 +213,47 @@ router.post(
   }
 )
 
+/**
+ * GET /api/auth/me
+ * Get current authenticated user
+ */
+router.get(
+  '/me',
+  authenticate,
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const userId = req.user?.id
+
+      if (!userId) {
+        return next(new AppError('Authentication required', 401))
+      }
+
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          role: true,
+          subscriptionTier: true,
+          isActive: true,
+          createdAt: true,
+          lastLogin: true,
+        },
+      })
+
+      if (!user) {
+        return next(new AppError('User not found', 404))
+      }
+
+      res.status(200).json({
+        status: 'success',
+        data: user,
+      })
+    } catch (error) {
+      next(error)
+    }
+  }
+)
+
 export default router

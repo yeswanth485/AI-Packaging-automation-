@@ -128,6 +128,12 @@ class APIClient {
     }
   }
 
+  async validateToken(token: string): Promise<any> {
+    // Use the current stored token to fetch user data from a /me endpoint
+    const response = await this.client.get<any>('/auth/me')
+    return response.data.data
+  }
+
   async generateAPIKey(): Promise<{ apiKey: string }> {
     const response = await this.client.post<{ apiKey: string }>('/auth/api-key')
     return response.data

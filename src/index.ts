@@ -39,42 +39,25 @@ app.get('/health', (_req, res) => {
   })
 })
 
-// Root endpoint
-app.get('/', (_req, res) => {
-  res.status(200).json({ 
-    message: 'AI Packaging Optimizer API',
-    status: 'running',
-    timestamp: new Date().toISOString()
-  })
-})
+// Serve frontend static files (in both development and production)
+const frontendStaticPath = path.join(__dirname, '../frontend/out')
 
-// Serve frontend static files in production
-if (process.env.NODE_ENV === 'production') {
-  const frontendStaticPath = path.join(__dirname, '../frontend/out')
+if (fs.existsSync(frontendStaticPath)) {
+  console.log('✅ Frontend static files found at:', frontendStaticPath)
   
-  if (fs.existsSync(frontendStaticPath)) {
-    console.log('Frontend static files found at:', frontendStaticPath)
-    
-    // Serve static files
-    app.use(express.static(frontendStaticPath))
-    
-    // SPA fallback for all non-API routes
-    app.get('*', (req, res, next) => {
-      // Skip API routes, health, and metrics
-      if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/metrics') {
-        return next()
-      }
-      
-      const indexPath = path.join(frontendStaticPath, 'index.html')
-      if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath)
-      } else {
-        res.status(404).json({ error: 'Frontend not found' })
-      }
-    })
-  } else {
-    console.log('Frontend build not found at:', frontendStaticPath)
-  }
+  // Serve static files
+  app.use(express.static(frontendStaticPath))
+  
+  // Set cache headers for static assets
+  app.use((req, res, next) => {
+    if (req.path.match(/\.(js|css|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/)) {
+      res.set('Cache-Control', 'public, max-age=31536000, immutable')
+    }
+    next()
+  })
+} else {
+  console.log('⚠️  Frontend build not found at:', frontendStaticPath)
+  console.log('📝 Note: Application will serve API only. Build frontend with: cd frontend && npm run build')
 }
 
 // Load API routes AFTER health check is set up
@@ -124,6 +107,17 @@ async function loadAPIRoutes() {
     
     // Error handler
     app.use(errorHandler)
+    
+    // SPA fallback route - MUST BE LAST after all API routes
+    app.get('*', (req, res) => {
+      const indexPath = path.join(frontendStaticPath, 'index.html')
+      if (fs.existsSync(indexPath)) {
+        console.log(`📄 Serving frontend: ${req.path}`)
+        return res.sendFile(indexPath)
+      }
+      
+      return res.status(404).json({ error: 'Frontend index.html not found' })
+    })
     
     logger.info('API routes loaded successfully')
     
