@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   reactStrictMode: true,
   swcMinify: true,
   eslint: {
@@ -10,12 +9,19 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Disable image optimization for static export
-  images: {
-    unoptimized: true,
+  // Proxy API requests to backend
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:3000/api/:path*',
+      },
+      {
+        source: '/health',
+        destination: 'http://localhost:3000/health',
+      },
+    ]
   },
-  // Use trailing slashes for better static hosting
-  trailingSlash: true,
 }
 
 module.exports = nextConfig
