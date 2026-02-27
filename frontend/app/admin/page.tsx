@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import type { User, APIError } from '@/lib/types'
 
-export default function AdminPage() {
+function AdminContent() {
   const { user } = useAuth()
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState({
@@ -181,5 +182,13 @@ export default function AdminPage() {
         </table>
       </div>
     </div>
+  )
+}
+
+export default function AdminPage() {
+  return (
+    <ProtectedRoute>
+      <AdminContent />
+    </ProtectedRoute>
   )
 }

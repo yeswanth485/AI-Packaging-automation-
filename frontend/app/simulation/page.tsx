@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/Badge'
 import { Download, FileText } from 'lucide-react'
 import CSVUpload from '@/components/simulation/CSVUpload'
 import ResultsTable from '@/components/simulation/ResultsTable'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import type { SimulationHistory, APIError } from '@/lib/types'
 
-export default function SimulationPage() {
+function SimulationContent() {
   const { isUploading, isProcessing, error, result, uploadCSV, processSimulation, checkStatus } = useSimulation()
   const { addToast } = useToast()
   const [currentJobId, setCurrentJobId] = useState<string | null>(null)
@@ -179,5 +180,13 @@ export default function SimulationPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function SimulationPage() {
+  return (
+    <ProtectedRoute>
+      <SimulationContent />
+    </ProtectedRoute>
   )
 }

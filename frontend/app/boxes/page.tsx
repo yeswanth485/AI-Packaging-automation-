@@ -12,9 +12,10 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Badge } from '@/components/ui/Badge'
 import { LoadingScreen } from '@/components/ui/Spinner'
 import { Plus, Edit, Trash2 } from 'lucide-react'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import type { Box, APIError } from '@/lib/types'
 
-export default function BoxesPage() {
+function BoxesContent() {
   const [boxes, setBoxes] = useState<Box[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -272,5 +273,13 @@ export default function BoxesPage() {
         </form>
       </Modal>
     </div>
+  )
+}
+
+export default function BoxesPage() {
+  return (
+    <ProtectedRoute>
+      <BoxesContent />
+    </ProtectedRoute>
   )
 }

@@ -11,7 +11,9 @@ import {
   CreditCard, 
   Settings,
   LogOut,
-  User
+  User,
+  Shield,
+  Code
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -22,7 +24,12 @@ const navigation = [
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Box Catalog', href: '/boxes', icon: Package },
   { name: 'Subscription', href: '/subscription', icon: CreditCard },
+  { name: 'API Integration', href: '/api-integration', icon: Code },
   { name: 'Configuration', href: '/config', icon: Settings },
+]
+
+const adminNavigation = [
+  { name: 'Admin', href: '/admin', icon: Shield },
 ]
 
 export default function Sidebar() {
@@ -56,6 +63,32 @@ export default function Sidebar() {
             </Link>
           )
         })}
+        
+        {/* Admin-only navigation */}
+        {user?.role === 'ADMIN' && (
+          <>
+            <div className="border-t border-gray-700 my-4"></div>
+            {adminNavigation.map((item) => {
+              const isActive = pathname === item.href
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors',
+                    isActive
+                      ? 'bg-gray-900 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  )}
+                >
+                  <Icon className="mr-3 h-5 w-5" />
+                  {item.name}
+                </Link>
+              )
+            })}
+          </>
+        )}
       </nav>
 
       <div className="p-4 border-t border-gray-700">

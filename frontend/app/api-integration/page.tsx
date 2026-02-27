@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { api } from '@/lib/api'
+import ProtectedRoute from '@/components/ProtectedRoute'
 import type { APIError } from '@/lib/types'
 
-export default function APIIntegrationPage() {
+function APIIntegrationContent() {
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -184,5 +185,13 @@ print(response.json())`}</code>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function APIIntegrationPage() {
+  return (
+    <ProtectedRoute>
+      <APIIntegrationContent />
+    </ProtectedRoute>
   )
 }
